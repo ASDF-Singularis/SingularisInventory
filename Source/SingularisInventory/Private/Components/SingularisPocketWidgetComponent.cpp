@@ -3,6 +3,7 @@
 #include <UMG.h>
 #include <GameFramework/Pawn.h>
 #include <GameFramework/PlayerController.h>
+#include <UObject/ConstructorHelpers.h>
 
 #include "Components/SingularisPocketComponent.h"
 #include "Objects/SingularisItem.h"
@@ -16,6 +17,15 @@ USingularisPocketWidgetComponent::USingularisPocketWidgetComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 
 	bAutoActivate = true;
+
+	static ConstructorHelpers::FClassFinder<USingularisPocketWidget> WidgetClassFinder(
+		TEXT(
+			"/SingularisInventory/UserInterfaces/WBP_SingularisInventory_SingularisPocketWidget.WBP_SingularisInventory_SingularisPocketWidget_C"
+		)
+	);
+
+	if (WidgetClassFinder.Succeeded())
+		PocketWidgetClass = WidgetClassFinder.Class;
 }
 
 void USingularisPocketWidgetComponent::BeginPlay()
