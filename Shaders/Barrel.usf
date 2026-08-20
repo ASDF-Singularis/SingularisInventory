@@ -1,0 +1,255 @@
+﻿// ============================================================================
+// 高斯模糊发光系统 - 基于XNA Bloom效果重构
+// ============================================================================
+
+// 高斯权重计算函数
+float GaussianWeight(float distance, float sigma)
+{
+	return exp(-(distance * distance) / (2.0 * sigma * sigma));
+}
+
+// 单向高斯模糊（水平方向）
+// 用于多Pass材质处理的第一步
+float4 GaussianBlurHorizontal(
+	float2 UV,
+	Texture2D SourceTex,
+	SamplerState SourceTexSampler,
+	float BlurRadius,
+	float2 ScreenSize
+)
+{
+	float2 PixelSize = 1.0 / ScreenSize;
+	float4 Result = float4(0, 0, 0, 0);
+	float TotalWeight = 0.0;
+
+	// 高斯模糊标准差
+	float Sigma = BlurRadius / 3.0;
+
+	// 采样范围（±3sigma覆盖99.7%的分布）
+	int SampleRange = int(ceil(BlurRadius));
+
+	for (int x = -SampleRange; x <= SampleRange; x++)
+	{
+		float2 SampleUV = UV + float2(x * PixelSize.x, 0);
+		float4 SampleColor = SourceTex.Sample(SourceTexSampler, SampleUV);
+		float Weight = GaussianWeight(float(x), Sigma);
+
+		Result += SampleColor * Weight;
+		TotalWeight += Weight;
+	}
+
+	return Result / TotalWeight;
+}
+
+// 单向高斯模糊（垂直方向）
+// 用于多Pass材质处理的第二步
+float4 GaussianBlurVertical(
+	float2 UV,
+	Texture2D SourceTex,
+	SamplerState SourceTexSampler,
+	float BlurRadius,
+	float2 ScreenSize
+)
+{
+	float2 PixelSize = 1.0 / ScreenSize;
+	float4 Result = float4(0, 0, 0, 0);
+	float TotalWeight = 0.0;
+
+	float Sigma = BlurRadius / 3.0;
+	int SampleRange = int(ceil(BlurRadius));
+
+	for (int y = -SampleRange; y <= SampleRange; y++)
+	{
+		float2 SampleUV = UV + float2(0, y * PixelSize.y);
+		float4 SampleColor = SourceTex.Sample(SourceTexSampler, SampleUV);
+		float Weight = GaussianWeight(float(y), Sigma);
+
+		Result += SampleColor * Weight;
+		TotalWeight += Weight;
+	}
+
+	return Result / TotalWeight;
+}
+
+// ============================================================================
+// 单Pass径向高斯发光 - 材质编辑器优化版本
+// ============================================================================
+
+// 优化的单Pass径向高斯发光效果
+// 使用径向采样模拟双向高斯模糊的效果
+// 在Custom Node中使用:
+// 输入: UV (float2), SourceTex (Texture Object), GlowIntensity (float), GlowRadius (float), ScreenSize (float2)
+// Code: return MaterialEditorScreenSpaceEdgeGlow(UV, SourceTex, SourceTexSampler, GlowIntensity, GlowRadius, ScreenSize);
+float4 MaterialEditorScreenSpaceEdgeGlow(
+	float2 UV,
+	Texture2D SourceTex,
+	SamplerState SourceTexSampler,
+	float GlowIntensity,
+	float GlowRadius,
+	float2 ScreenSize
+)
+{
+	float2 PixelSize = 1.0 / ScreenSize;
+
+	// 采样中心像素
+	float4 CenterColor = SourceTex.Sample(SourceTexSampler, UV);
+
+	// Bloom效果：提取亮度信息作为发光源
+	// 使用感知亮度公式
+	float Luminance = dot(CenterColor.rgb, float3(0.299, 0.587, 0.114));
+	float AlphaWeight = CenterColor.a;
+
+	// 如果当前像素太亮或者Alpha太高，说明是源图像，减少发光贡献
+	// 发光主要应该在边缘外围
+	float SourceWeight = smoothstep(0.3, 0.7, AlphaWeight);
+
+	// 径向高斯模糊采样
+	float4 GlowAccum = float4(0, 0, 0, 0);
+	float TotalWeight = 0.0;
+
+	// 高斯参数
+	float Sigma = GlowRadius / 3.0;
+
+	// 使用多环径向采样
+	const int Rings = 3;        // 环数
+	const int SamplesPerRing = 8; // 每环采样数
+
+	for (int ring = 1; ring <= Rings; ring++)
+	{
+		float RingRadius = (GlowRadius * ring) / float(Rings);
+		float RingWeight = GaussianWeight(RingRadius, Sigma);
+
+		for (int sample = 0; sample < SamplesPerRing; sample++)
+		{
+			// 计算采样角度
+			float Angle = (float(sample) / float(SamplesPerRing)) * 6.28318530718; // 2*PI
+			float2 Direction = float2(cos(Angle), sin(Angle));
+			float2 Offset = Direction * RingRadius * PixelSize;
+			float2 SampleUV = UV + Offset;
+
+			// 采样
+			float4 SampleColor = SourceTex.Sample(SourceTexSampler, SampleUV);
+
+			// 计算该采样点的发光贡献
+			float SampleLuminance = dot(SampleColor.rgb, float3(0.299, 0.587, 0.114));
+			float SampleWeight = SampleColor.a * RingWeight;
+
+			// 累加发光
+			GlowAccum += float4(SampleColor.rgb * SampleWeight, SampleWeight);
+			TotalWeight += SampleWeight;
+		}
+	}
+
+	// 归一化
+	if (TotalWeight > 0.001)
+	{
+		GlowAccum.rgb /= TotalWeight;
+		GlowAccum.a /= (Rings * SamplesPerRing);
+	}
+
+	// 应用发光强度
+	GlowAccum.rgb *= GlowIntensity;
+	GlowAccum.a = saturate(GlowAccum.a * GlowIntensity);
+
+	// 减少源图像区域的发光（让发光主要在边缘外围）
+	GlowAccum *= (1.0 - SourceWeight * 0.8);
+
+	return GlowAccum;
+}
+
+// ============================================================================
+// 快速版本 - 性能优先
+// ============================================================================
+
+// 快速边缘发光（采样数更少）
+// 在Custom Node中使用:
+// 输入: UV (float2), SourceTex (Texture Object), GlowIntensity (float), GlowRadius (float), ScreenSize (float2)
+// Code: return FastEdgeGlow(UV, SourceTex, SourceTexSampler, GlowIntensity, GlowRadius, ScreenSize);
+float4 FastEdgeGlow(
+	float2 UV,
+	Texture2D SourceTex,
+	SamplerState SourceTexSampler,
+	float GlowIntensity,
+	float GlowRadius,
+	float2 ScreenSize
+)
+{
+	float2 PixelSize = 1.0 / ScreenSize;
+	float4 CenterColor = SourceTex.Sample(SourceTexSampler, UV);
+
+	// 如果中心区域Alpha太高，减少发光
+	float SourceWeight = smoothstep(0.3, 0.7, CenterColor.a);
+
+	// 简化的4方向+4对角线采样
+	float4 GlowAccum = float4(0, 0, 0, 0);
+	float TotalWeight = 0.0;
+
+	// 8方向偏移
+	float2 Directions[8] = {
+		float2(1, 0), float2(-1, 0), float2(0, 1), float2(0, -1),
+		float2(0.707, 0.707), float2(-0.707, 0.707),
+		float2(0.707, -0.707), float2(-0.707, -0.707)
+	};
+
+	// 两层采样
+	for (int layer = 1; layer <= 2; layer++)
+	{
+		float LayerRadius = GlowRadius * layer * 0.5;
+		float LayerWeight = 1.0 / float(layer);
+
+		for (int i = 0; i < 8; i++)
+		{
+			float2 Offset = Directions[i] * LayerRadius * PixelSize;
+			float4 SampleColor = SourceTex.Sample(SourceTexSampler, UV + Offset);
+
+			float Weight = SampleColor.a * LayerWeight;
+			GlowAccum += float4(SampleColor.rgb * Weight, Weight);
+			TotalWeight += Weight;
+		}
+	}
+
+	// 归一化
+	if (TotalWeight > 0.001)
+	{
+		GlowAccum.rgb /= TotalWeight;
+		GlowAccum.a /= 16.0; // 8方向 * 2层
+	}
+
+	// 应用强度并减少源区域发光
+	GlowAccum.rgb *= GlowIntensity;
+	GlowAccum.a = saturate(GlowAccum.a * GlowIntensity);
+	GlowAccum *= (1.0 - SourceWeight * 0.8);
+
+	return GlowAccum;
+}
+
+// 屏幕UV弯曲函数：中间向内收缩，边缘向外扩张
+// CurvatureStrength: 曲率强度,推荐值 0.1-0.5,值越大弯曲越明显
+// AspectRatio: 屏幕宽高比 (Width/Height),默认1.0为正方形
+float2 AdvancedCurveScreenUV(float2 UV, float CurvatureStrength = 0.1, float AspectRatio = 1.777)
+{
+	// 将UV从[0,1]转换到[-1,1]的中心坐标系
+	float2 CenteredUV = (UV - 0.5) * 2.0;
+
+	// 根据宽高比调整X坐标,保持正确的圆形曲率
+	CenteredUV.x *= AspectRatio;
+
+	// 计算距离屏幕中心的径向距离
+	float RadialDistance = length(CenteredUV);
+
+	// 使用平滑的曲率函数模拟曲面屏效果
+	// 距离中心越远,向"内"弯曲的效果越明显
+	float CurveFactor = 1.0 + CurvatureStrength * RadialDistance * RadialDistance;
+
+	// 应用曲率变换:将UV向中心方向压缩
+	float2 CurvedUV = CenteredUV / CurveFactor;
+
+	// 还原X坐标的宽高比调整
+	CurvedUV.x /= AspectRatio;
+
+	// 转换回[0,1]的UV空间
+	float2 FinalUV = CurvedUV * 0.5 + 0.5;
+
+	// 边界处理:超出[0,1]范围的UV会被自然裁剪
+	return FinalUV;
+}
