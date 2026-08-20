@@ -1,30 +1,38 @@
-﻿// 屏幕UV弯曲函数：中间向内收缩，边缘向外扩张
-// CurvatureStrength: 曲率强度,推荐值 0.1-0.5,值越大弯曲越明显
-// AspectRatio: 屏幕宽高比 (Width/Height),默认1.0为正方形
+﻿/**
+ * 屏幕空间 UV 桶形畸变 (Barrel Distortion)
+ *
+ * 将平面屏幕 UV 映射为向外凸起的桶形,常用于 CRT 复古滤镜、镜头畸变模拟及
+ * 圆弧屏幕投影。采用有理分式模型 r' = r / (1 + k·r²),边缘衰减自然柔和,
+ * 与 Brown-Conrady 镜头畸变模型在单 k₁ 项下等价。
+ *
+ * @param UV                原始屏幕 UV,范围 [0, 1]。
+ * @param CurvatureStrength 曲率强度。正值 -> 桶形凸起;负值 -> 枕形内凹;0 -> 无畸变。
+ * @param AspectRatio       渲染目标宽高比,默认 1.777 对应 16:9。用于补偿非正方形像素,
+ *                          使畸变在物理屏幕空间保持圆形对称而非椭圆拉伸。
+ * @return 畸变后 UV。注意:强度过大时可能越出 [0, 1],采样边界行为取决于纹理 Address 模式。
+ */
 float2 AdvancedCurveScreenUV(float2 UV, float CurvatureStrength = 0.1, float AspectRatio = 1.777)
 {
-	// 将UV从[0,1]转换到[-1,1]的中心坐标系
+	// 1) 归一到 [-1, 1] 中心坐标系,使原点位于屏幕中心,便于径向二次方计算
 	float2 CenteredUV = (UV - 0.5) * 2.0;
 
-	// 根据宽高比调整X坐标,保持正确的圆形曲率
+	// 2) x 分量预乘宽高比,使后续径向距离在物理屏幕空间呈各向同性
+	//    否则宽屏下圆形畸变会被横向拉伸为椭圆
 	CenteredUV.x *= AspectRatio;
 
-	// 计算距离屏幕中心的径向距离
+	// 3) 计算到屏幕中心的欧氏径向距离 r
 	float RadialDistance = length(CenteredUV);
 
-	// 使用平滑的曲率函数模拟曲面屏效果
-	// 距离中心越远,向"内"弯曲的效果越明显
+	// 4) 有理分式畸变因子:1 / (1 + k·r²)
+	//    r=0 时因子为 1(中心不变);r 越大因子越大,UV 越被压缩至中心,产生桶形外凸
 	float CurveFactor = 1.0 + CurvatureStrength * RadialDistance * RadialDistance;
-
-	// 应用曲率变换:将UV向中心方向压缩
 	float2 CurvedUV = CenteredUV / CurveFactor;
 
-	// 还原X坐标的宽高比调整
+	// 5) 还原 x 的宽高比缩放,回到纹理 UV 坐标空间
 	CurvedUV.x /= AspectRatio;
 
-	// 转换回[0,1]的UV空间
+	// 6) 反归一化回 [0, 1] 范围,供纹理采样使用
 	float2 FinalUV = CurvedUV * 0.5 + 0.5;
 
-	// 边界处理:超出[0,1]范围的UV会被自然裁剪
 	return FinalUV;
 }
