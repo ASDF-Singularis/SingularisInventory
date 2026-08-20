@@ -13,6 +13,10 @@ public class SingularisInventory : ModuleRules
 				"Engine",
 				"NetCore",
 
+				"UMG",
+				"Slate",
+				"SlateCore",
+
 				"InputCore",
 				"EnhancedInput",
 
