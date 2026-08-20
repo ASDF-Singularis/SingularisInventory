@@ -3,6 +3,7 @@
 #include <AssetToolsModule.h>
 
 #include "Factories/SingularisItemFactory.h"
+#include "Factories/SingularisPocketWidgetFactory.h"
 
 #define LOCTEXT_NAMESPACE "FSingularisInventoryEditorModule"
 
@@ -18,6 +19,11 @@ void FSingularisInventoryEditorModule::StartupModule()
 	RegisterAssetTypeAction(
 		AssetTools,
 		MakeShareable(new FAssetTypeActions_SingularisItem(SingularisPluginCategory))
+	);
+
+	RegisterAssetTypeAction(
+		AssetTools,
+		MakeShareable(new FAssetTypeActions_SingularisPocketWidget(SingularisPluginCategory))
 	);
 }
 
