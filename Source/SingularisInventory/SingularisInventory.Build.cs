@@ -25,6 +25,9 @@ public class SingularisInventory : ModuleRules
 				"InputCore",
 				"EnhancedInput",
 
+				"EngineSettings",
+				"DeveloperSettings",
+
 				"GameplayTags"
 			]
 		);
