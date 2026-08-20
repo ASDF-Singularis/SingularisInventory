@@ -8,7 +8,6 @@
 class UDataTable;
 class AActor;
 class USingularisItem;
-class USingularisItemComponent;
 class USingularisPocketComponent;
 
 /**
@@ -48,6 +47,7 @@ public:
 
 #pragma endregion
 
+public:
 #pragma region Constructors
 
 	USingularisInventoryComponent();
@@ -63,10 +63,11 @@ public:
 #pragma region API
 
 	/**
-	 * 从数据表生成物品并放入世界。
-	 * 查 Row → NewObject 物品实例（Outer 为瞬时包）→ SpawnActor 形态 Actor → 绑定 ItemComponent。
+	 * 将物品实例放入世界。
+	 * 按物品类查数据表取形态 Actor 类 → SpawnActor 形态 Actor → 绑定 ItemComponent。
 	 * 形态 Actor 蓝图未预先挂 ItemComponent 时，物品仅进入世界、不可收容。
-	 * @return 形态 Actor；查表失败或生成失败返回 nullptr
+	 * 调用方须确保物品实例已从原持有方（如容器插槽）取出，避免重复持有。
+	 * @return 形态 Actor；物品类未在表中、查表失败或生成失败返回 nullptr
 	 */
 	UFUNCTION(
 		BlueprintCallable,
@@ -74,12 +75,13 @@ public:
 		Category = "SingularisInventory|引力奇点物库存|API",
 		meta = (DisplayName = "生成物品入世界")
 	)
-	AActor* SpawnItemInWorld(FName RowId, FTransform Transform);
+	AActor* SpawnItemInWorld(USingularisItem* Item, FTransform Transform);
 
 	/**
 	 * 从世界收容物品到容器。
-	 * TakeItem 取回实例 → Destroy 形态 Actor → 提供目标容器则入容器，否则返回实例由调用方处置。
-	 * @return 收容后的物品实例；入容器失败（满）或未提供容器时仍返回实例，无物品或入参非法返回 nullptr
+	 * 内部查找形态 Actor 上的 ItemComponent → TakeItem 取回实例 → Destroy 形态 Actor →
+	 * 提供目标容器则入容器，否则返回实例由调用方处置。
+	 * @return 收容后的物品实例；形态 Actor 无 ItemComponent 或无物品、入参非法返回 nullptr
 	 */
 	UFUNCTION(
 		BlueprintCallable,
@@ -87,10 +89,15 @@ public:
 		Category = "SingularisInventory|引力奇点物库存|API",
 		meta = (DisplayName = "收容物品出世界")
 	)
-	USingularisItem* CollectItem(
-		USingularisItemComponent* ItemComponent,
-		USingularisPocketComponent* TargetContainer = nullptr
-	);
+	USingularisItem* CollectItem(AActor* FormActor, USingularisPocketComponent* TargetContainer = nullptr);
+
+#pragma endregion
+
+private:
+#pragma region Internal Function
+
+	/** 按物品实例的类在数据表中查其形态 Actor 类。 */
+	TSubclassOf<AActor> FindFormActorClassForItem(USingularisItem* Item);
 
 #pragma endregion
 };
