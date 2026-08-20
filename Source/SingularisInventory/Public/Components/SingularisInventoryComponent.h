@@ -33,7 +33,7 @@ class SINGULARISINVENTORY_API USingularisInventoryComponent : public UActorCompo
 public:
 #pragma region Parameter
 
-	/** 物品静态数据与形态映射的数据表，行类型 FSingularisMagicalElementRow。 */
+	/** 物品静态数据与形态映射的数据表，行类型 FSingularisItemRow。 */
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,

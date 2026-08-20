@@ -106,7 +106,7 @@ TSubclassOf<AActor> USingularisInventoryComponent::FindFormActorClassForItem(USi
 	// 2) 遍历数据表，按物品类精确匹配查其形态 Actor 类
 	for (const auto& Pair : ItemTable->GetRowMap())
 	{
-		const FSingularisMagicalElementRow* Row = reinterpret_cast<const FSingularisMagicalElementRow*>(Pair.Value);
+		const FSingularisItemRow* Row = reinterpret_cast<const FSingularisItemRow*>(Pair.Value);
 		if (IsValid(Row->ItemClass) && Row->ItemClass.Get() == Item->GetClass())
 		{
 			return Row->FormActorClass;

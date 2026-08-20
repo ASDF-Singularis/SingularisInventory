@@ -7,7 +7,7 @@
 class USingularisItem;
 
 USTRUCT(BlueprintType)
-struct FSingularisMagicalElementRow : public FTableRowBase
+struct FSingularisItemRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
