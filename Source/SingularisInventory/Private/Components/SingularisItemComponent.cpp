@@ -50,15 +50,11 @@ void USingularisItemComponent::BindItem(USingularisItem* InItem)
 {
 	// 1) 零信任校验：空入参直接忽略
 	if (InItem == nullptr)
-	{
 		return;
-	}
 
 	// 2) 幂等：已持有同一实例则无副作用
 	if (Item == InItem)
-	{
 		return;
-	}
 
 	// 3) 若已持有其他实例，先解除旧引用并广播取出，保证单一持有
 	if (Item != nullptr)
@@ -78,9 +74,7 @@ USingularisItem* USingularisItemComponent::TakeItem()
 {
 	// 1) 空状态安全返回
 	if (Item == nullptr)
-	{
 		return nullptr;
-	}
 
 	// 2) 解除复制注册，广播取出并清空持有，将引用权交还调用方
 	USingularisItem* const OutItem = Item.Get();
@@ -94,25 +88,17 @@ USingularisItem* USingularisItemComponent::TakeItem()
 void USingularisItemComponent::RegisterItemSubObject()
 {
 	if (Item == nullptr)
-	{
 		return;
-	}
 
 	if (GetOwner()->HasAuthority())
-	{
 		AddReplicatedSubObject(Item.Get());
-	}
 }
 
 void USingularisItemComponent::UnregisterItemSubObject()
 {
 	if (Item == nullptr)
-	{
 		return;
-	}
 
 	if (GetOwner()->HasAuthority())
-	{
 		RemoveReplicatedSubObject(Item.Get());
-	}
 }

@@ -1,5 +1,7 @@
 #include "Configs/SingularisInventorySettings.h"
 
+#include <UObject/ConstructorHelpers.h>
+
 USingularisInventorySettings::USingularisInventorySettings()
 {
 	static ConstructorHelpers::FObjectFinder<UDataTable> ItemTableFinder(
