@@ -2,6 +2,8 @@
 
 #include <Interfaces/IPluginManager.h>
 
+DEFINE_LOG_CATEGORY(LogSingularisInventory);
+
 #define LOCTEXT_NAMESPACE "FSingularisInventoryModule"
 
 void FSingularisInventoryModule::StartupModule()
