@@ -115,6 +115,7 @@
 
 - 中文消息,陈述式,与现有注释风格一致
 - 统一模式:`上下文 | 动作 | 参数`;上下文用 `GetNameSafe(GetOwner())`、`GetNameSafe(Item)`、物品类名、槽位索引
+- **豁免**:构造函数内的日志不带 `[所有者名]` 前缀——CDO 构造期组件未挂载,无所有者可言;改为直接以资产路径等静态上下文开头(与"构造函数内不使用 ensure"同级特例)
 - ensureMsgf 形态:`ensureMsgf(LogSingularisInventory, Cond, TEXT("..."))`,失败即 return
 - Warning/Verbose 用 `UE_LOG` + `%s`/`%d` 参数
 
