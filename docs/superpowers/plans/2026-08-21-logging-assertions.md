@@ -17,7 +17,7 @@
 
 ## Global Constraints
 
-- UE 5.8;编译命令:`"C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" SingularisInventoryEditor Win64 Development -Project="D:\UnrealProjects\VehicleTour\VehicleTour.uproject" -WaitMutex`
+- UE 5.8;编译命令:`"C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" VehicleTourEditor Win64 Development -Project="D:\UnrealProjects\VehicleTour\VehicleTour.uproject" -WaitMutex`(构建目标必须是项目目标 `VehicleTourEditor`;`SingularisInventoryEditor` 是模块名而非目标)
 - 若编辑器正在运行会锁定 DLL,UBT 编译前先关闭编辑器;或改用编辑器内 Live Coding(Ctrl+Alt+F11)
 - 日志分类唯一:`LogSingularisInventory`(默认 `Log`,上限 `All`),声明于 `Source/SingularisInventory/Public/SingularisInventory.h`
 - 消息一律中文,格式 `[所有者名] 动作:细节`,上下文用 `GetNameSafe`(空对象输出 "None");`TSubclassOf` 参数必须写 `.Get()`
@@ -86,7 +86,7 @@ DEFINE_LOG_CATEGORY(LogSingularisInventory);
 先关闭正在运行的编辑器,然后运行:
 
 ```
-"C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" SingularisInventoryEditor Win64 Development -Project="D:\UnrealProjects\VehicleTour\VehicleTour.uproject" -WaitMutex
+"C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat" VehicleTourEditor Win64 Development -Project="D:\UnrealProjects\VehicleTour\VehicleTour.uproject" -WaitMutex
 ```
 
 Expected: 输出以 `Result: Succeeded` 结尾,无 error。
