@@ -3,6 +3,7 @@
 #include <Net/UnrealNetwork.h>
 
 #include "Objects/SingularisItem.h"
+#include "SingularisInventory.h"
 
 USingularisItemComponent::USingularisItemComponent()
 {
@@ -50,15 +51,22 @@ void USingularisItemComponent::BindItem(USingularisItem* InItem)
 {
 	// 1) 零信任校验：空入参直接忽略
 	if (InItem == nullptr)
+	{
+		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] BindItem：物品实例为空"), *GetNameSafe(GetOwner()));
 		return;
+	}
 
 	// 2) 幂等：已持有同一实例则无副作用
 	if (Item == InItem)
+	{
+		UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] BindItem：物品 %s 已持有，忽略"), *GetNameSafe(GetOwner()), *GetNameSafe(InItem));
 		return;
+	}
 
 	// 3) 若已持有其他实例，先解除旧引用并广播取出，保证单一持有
 	if (Item != nullptr)
 	{
+		UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] BindItem：替换旧物品 %s → %s"), *GetNameSafe(GetOwner()), *GetNameSafe(Item.Get()), *GetNameSafe(InItem));
 		UnregisterItemSubObject();
 		OnItemReleasedEvent.Broadcast(Item.Get());
 		Item = nullptr;
@@ -68,13 +76,18 @@ void USingularisItemComponent::BindItem(USingularisItem* InItem)
 	Item = InItem;
 	RegisterItemSubObject();
 	OnItemBoundEvent.Broadcast(InItem);
+
+	UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] BindItem：物品 %s(%s) 绑定成功"), *GetNameSafe(GetOwner()), *GetNameSafe(InItem), *GetNameSafe(InItem->GetClass()));
 }
 
 USingularisItem* USingularisItemComponent::TakeItem()
 {
 	// 1) 空状态安全返回
 	if (Item == nullptr)
+	{
+		UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] TakeItem：无物品可取出"), *GetNameSafe(GetOwner()));
 		return nullptr;
+	}
 
 	// 2) 解除复制注册，广播取出并清空持有，将引用权交还调用方
 	USingularisItem* const OutItem = Item.Get();
@@ -82,6 +95,7 @@ USingularisItem* USingularisItemComponent::TakeItem()
 	OnItemReleasedEvent.Broadcast(OutItem);
 	Item = nullptr;
 
+	UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] TakeItem：物品 %s(%s) 取出成功"), *GetNameSafe(GetOwner()), *GetNameSafe(OutItem), *GetNameSafe(OutItem->GetClass()));
 	return OutItem;
 }
 
