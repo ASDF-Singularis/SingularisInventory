@@ -82,7 +82,7 @@
 | AddItemAt | 空入参 / 非法索引 / 槽已占用 / 物品重复(调用方误用) | Warning |
 | RemoveItem | 空入参 / 物品未找到 | Warning |
 | RemoveItemAt | 非法索引 → Warning;空槽(正常边界) | Verbose |
-| SelectSlot / SelectNext / SelectPrevious / SwapSlots | 非法索引、Capacity≤0、相同索引(误用) → Warning;幂等/成功 → Verbose | Warning / Verbose |
+| SelectSlot / SelectNext / SelectPrevious / SwapSlots | 非法索引、Capacity≤0 → Warning;幂等命中(相同索引)/ 成功 → Verbose | Warning / Verbose |
 | Clear / BeginPlay 初始化 | 成功 | Verbose |
 | OnRep_* 路径 | — | 不记 |
 
@@ -116,7 +116,7 @@
 - 中文消息,陈述式,与现有注释风格一致
 - 统一模式:`上下文 | 动作 | 参数`;上下文用 `GetNameSafe(GetOwner())`、`GetNameSafe(Item)`、物品类名、槽位索引
 - **豁免**:构造函数内的日志不带 `[所有者名]` 前缀——CDO 构造期组件未挂载,无所有者可言;改为直接以资产路径等静态上下文开头(与"构造函数内不使用 ensure"同级特例)
-- ensureMsgf 形态:`ensureMsgf(LogSingularisInventory, Cond, TEXT("..."))`,失败即 return
+- ensureMsgf 形态:`ensureMsgf(Cond, TEXT("..."))`,失败即 return(UE 5.8 的 ensureMsgf 不接受分类参数,输出至 LogOutputDevice)
 - Warning/Verbose 用 `UE_LOG` + `%s`/`%d` 参数
 
 ## 改动文件清单

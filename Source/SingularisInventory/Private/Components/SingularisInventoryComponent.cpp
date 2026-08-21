@@ -72,7 +72,7 @@ AActor* USingularisInventoryComponent::SpawnItemInWorld(USingularisItem* Item, F
 		UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] SpawnItemInWorld：形态 Actor %s 无 ItemComponent，仅入世不可收容"), *GetNameSafe(GetOwner()), *GetNameSafe(FormActor));
 	}
 
-	UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] SpawnItemInWorld：物品 %s(%s) 入世成功 → 形态 Actor %s"), *GetNameSafe(GetOwner()), *GetNameSafe(Item), *GetNameSafe(Item->GetClass()), *GetNameSafe(FormActor));
+	UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] SpawnItemInWorld：物品 %s(%s) 入世成功 → 形态 Actor %s（位置 %s）"), *GetNameSafe(GetOwner()), *GetNameSafe(Item), *GetNameSafe(Item->GetClass()), *GetNameSafe(FormActor), *Transform.GetLocation().ToString());
 	return FormActor;
 }
 
