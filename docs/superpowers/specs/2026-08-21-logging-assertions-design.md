@@ -46,11 +46,11 @@
 - OnRep 复制路径不记日志(高频噪音)
 - 构造函数内不使用 ensure,仅用 UE_LOG Error
 
-## 逐失败点映射(20 处)
+## 逐失败点映射
 
 **总原则:每个失败出口都留一条日志;根因层(子系统)与操作层(组件)各自记各自的,不纠结重复。**
 
-### USingularisInventoryComponent — 8 处
+### USingularisInventoryComponent
 
 | 位置 | 条件 | 级别 |
 |---|---|---|
@@ -64,7 +64,7 @@
 | CollectItem | 无 ItemComponent(设计上的"不可收容")/ 无物品 | Verbose |
 | CollectItem | 成功 | Verbose(物品名 + 入容器结果) |
 
-### USingularisItemComponent — 3 处
+### USingularisItemComponent
 
 | 位置 | 条件 | 级别 |
 |---|---|---|
@@ -72,7 +72,7 @@
 | BindItem | 幂等命中 / 替换旧实例 / 成功 | Verbose |
 | TakeItem | 空状态(正常)/ 成功 | Verbose |
 
-### USingularisPocketComponent — 12 处
+### USingularisPocketComponent
 
 | 位置 | 条件 | 级别 |
 |---|---|---|
@@ -86,7 +86,7 @@
 | Clear / BeginPlay 初始化 | 成功 | Verbose |
 | OnRep_* 路径 | — | 不记 |
 
-### USingularisPocketWidgetComponent — 6 处
+### USingularisPocketWidgetComponent
 
 | 位置 | 条件 | 级别 |
 |---|---|---|
@@ -96,7 +96,7 @@
 | ObservePocketComponent | 引用未解析 / 非口袋组件 | Warning(配置问题) |
 | 绑定成功 + 全量拉取 | 成功 | Verbose |
 
-### USingularisInventoryItemSubsystem — 2 处
+### USingularisInventoryItemSubsystem
 
 | 位置 | 条件 | 级别 |
 |---|---|---|
@@ -105,7 +105,7 @@
 
 查询层空入参不记(高频 const 查询,组件层已记)。
 
-### USingularisInventorySettings — 1 处
+### USingularisInventorySettings
 
 | 位置 | 条件 | 级别 |
 |---|---|---|
@@ -147,5 +147,5 @@
 
 - **缺行 Warning 可能刷屏**:配置正确时不产生;配置坏时刷屏本身是"修我"信号,且 UE Output Log 折叠重复消息——接受。
 - **check 级别当前零使用**:现有代码的所有失败均可安全中断,无"违反必崩"的内部不变量;级别保留给未来代码。
-- **编辑器工厂日志**:本期不插桩(范围聚焦运行时模块;工厂瑕疵已有独立跟踪)。
+- **编辑器工厂日志**:本期不插桩(范围聚焦运行时模块;工厂瑕疵用户已确认暂不处理)。
 - **分级约定落点**:本设计文档即约定载体;将来撰写 README 时迁移。
