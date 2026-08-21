@@ -7,6 +7,7 @@
 
 #include "Components/SingularisPocketComponent.h"
 #include "Objects/SingularisItem.h"
+#include "SingularisInventory.h"
 #include "Widgets/SingularisPocketWidget.h"
 
 USingularisPocketWidgetComponent::USingularisPocketWidgetComponent()
@@ -25,7 +26,13 @@ USingularisPocketWidgetComponent::USingularisPocketWidgetComponent()
 	);
 
 	if (WidgetClassFinder.Succeeded())
+	{
 		PocketWidgetClass = WidgetClassFinder.Class;
+	}
+	else
+	{
+		UE_LOG(LogSingularisInventory, Error, TEXT("默认口袋控件加载失败：%s"), TEXT("/SingularisInventory/UserInterfaces/WBP_SingularisInventory_SingularisPocketWidget"));
+	}
 }
 
 void USingularisPocketWidgetComponent::BeginPlay()
@@ -60,7 +67,10 @@ APlayerController* USingularisPocketWidgetComponent::ResolveOwningLocalPlayerCon
 
 	// 2) 仅本客户端拥有的本地控制器才有效，避免为其他玩家复制的 Pawn 创建幽灵控件
 	if (!IsValid(PlayerController) || !PlayerController->IsLocalController())
+	{
+		UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] ResolveOwningLocalPlayerController：非本地控制者，跳过 UI"), *GetNameSafe(GetOwner()));
 		return nullptr;
+	}
 
 	return PlayerController;
 }
@@ -71,17 +81,22 @@ void USingularisPocketWidgetComponent::CreatePocketWidget()
 	//    避免为其他玩家复制的 Pawn 创建幽灵控件
 	APlayerController* PlayerController = ResolveOwningLocalPlayerController();
 	if (!IsValid(PlayerController))
-		return;
+		return; // 非本地控制者，ResolveOwningLocalPlayerController 已记录 Verbose
 
 	// 2) 零信任校验：未配置控件类则跳过
 	if (!IsValid(PocketWidgetClass))
+	{
+		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] CreatePocketWidget：未配置控件类"), *GetNameSafe(GetOwner()));
 		return;
+	}
 
 	PocketWidget = CreateWidget<USingularisPocketWidget>(PlayerController, PocketWidgetClass);
-	if (!IsValid(PocketWidget))
+	if (!ensureMsgf(IsValid(PocketWidget), TEXT("[%s] CreatePocketWidget：创建控件 %s 失败"), *GetNameSafe(GetOwner()), *GetNameSafe(PocketWidgetClass.Get())))
 		return;
 
 	PocketWidget->AddToViewport();
+
+	UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] CreatePocketWidget：控件 %s 创建成功并加入视口"), *GetNameSafe(GetOwner()), *GetNameSafe(PocketWidgetClass.Get()));
 }
 
 void USingularisPocketWidgetComponent::ObservePocketComponent()
@@ -92,13 +107,16 @@ void USingularisPocketWidgetComponent::ObservePocketComponent()
 
 	// 1) 零信任校验：控件与目标组件均需有效
 	if (!IsValid(PocketWidget))
-		return;
+		return; // 创建失败时 CreatePocketWidget 已记录日志
 
 	USingularisPocketComponent* PocketComponent = Cast<USingularisPocketComponent>(
 		PocketComponentReference.GetComponent(GetOwner())
 	);
 	if (!IsValid(PocketComponent))
+	{
+		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] ObservePocketComponent：未解析到口袋组件，请检查 PocketComponentReference 配置"), *GetNameSafe(GetOwner()));
 		return;
+	}
 
 	// 2) 绑定事件实现事件驱动观察者模式
 	PocketComponent->OnItemAddedEvent.AddDynamic(this, &USingularisPocketWidgetComponent::HandleItemAdded);
@@ -110,6 +128,8 @@ void USingularisPocketWidgetComponent::ObservePocketComponent()
 
 	// 3) 主动拉取一次全量状态，消除错过事件导致的空白期
 	RefreshPocket(PocketComponent);
+
+	UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] ObservePocketComponent：已绑定 %s 事件并完成全量拉取"), *GetNameSafe(GetOwner()), *GetNameSafe(PocketComponent));
 }
 
 void USingularisPocketWidgetComponent::RefreshPocket(const USingularisPocketComponent* PocketComponent) const
