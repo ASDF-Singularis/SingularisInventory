@@ -92,17 +92,12 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_Slots, Transient, DuplicateTransient)
 	TArray<FSingularisPocketSlot> Slots{};
 
-	/** 当前选中插槽索引，INDEX_NONE 表示无选中。 */
-	UPROPERTY(ReplicatedUsing = OnRep_SelectedSlotIndex, Transient)
+	/** 当前选中插槽索引，INDEX_NONE 表示无选中。客户端本地状态，不复制（选中为本地行为）。 */
 	int32 SelectedSlotIndex = INDEX_NONE;
 
 	/** 客户端 OnRep diff 用的上一帧插槽数组快照，非复制。 */
 	UPROPERTY(Transient)
 	TArray<FSingularisPocketSlot> PreviousSlotsSnapshot{};
-
-	/** 客户端 OnRep diff 用的上一帧选中索引快照，非复制。 */
-	UPROPERTY(Transient)
-	int32 PreviousSelectedSlotIndex = INDEX_NONE;
 
 #pragma endregion
 
@@ -266,10 +261,6 @@ private:
 	/** 客户端 Slots 复制回调，diff 快照触发等价的加入 / 移除事件。 */
 	UFUNCTION()
 	void OnRep_Slots();
-
-	/** 客户端 SelectedSlotIndex 复制回调，触发选中变化事件。 */
-	UFUNCTION()
-	void OnRep_SelectedSlotIndex();
 
 #pragma endregion
 

@@ -29,7 +29,6 @@ void USingularisPocketComponent::BeginPlay()
 
 	// 2) 建立客户端 OnRep diff 的初始基线快照
 	PreviousSlotsSnapshot = Slots;
-	PreviousSelectedSlotIndex = SelectedSlotIndex;
 }
 
 void USingularisPocketComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -45,7 +44,6 @@ void USingularisPocketComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME_CONDITION(USingularisPocketComponent, Slots, COND_OwnerOnly);
-	DOREPLIFETIME_CONDITION(USingularisPocketComponent, SelectedSlotIndex, COND_OwnerOnly);
 }
 
 bool USingularisPocketComponent::IsEmpty() const
@@ -384,18 +382,6 @@ void USingularisPocketComponent::OnRep_Slots()
 		return;
 
 	DiffAndBroadcastSlots();
-}
-
-void USingularisPocketComponent::OnRep_SelectedSlotIndex()
-{
-	if (GetOwner()->HasAuthority())
-		return;
-
-	if (PreviousSelectedSlotIndex == SelectedSlotIndex)
-		return;
-
-	OnSelectionChangedEvent.Broadcast(PreviousSelectedSlotIndex, SelectedSlotIndex);
-	PreviousSelectedSlotIndex = SelectedSlotIndex;
 }
 
 void USingularisPocketComponent::InitializeSlots()
