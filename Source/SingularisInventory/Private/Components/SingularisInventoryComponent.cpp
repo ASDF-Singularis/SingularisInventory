@@ -66,7 +66,7 @@ void USingularisInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayRe
 	Super::EndPlay(EndPlayReason);
 }
 
-AActor* USingularisInventoryComponent::SpawnItemInWorld(USingularisItem* Item, FTransform Transform)
+AActor* USingularisInventoryComponent::SpawnItemInWorld(USingularisItem* Item, const FTransform Transform)
 {
 	// 1) 零信任校验：物品实例必须有效
 	if (!IsValid(Item))
@@ -99,10 +99,7 @@ AActor* USingularisInventoryComponent::SpawnItemInWorld(USingularisItem* Item, F
 	return FormActor;
 }
 
-USingularisItem* USingularisInventoryComponent::CollectItem(
-	AActor* FormActor,
-	USingularisPocketComponent* TargetContainer
-)
+USingularisItem* USingularisInventoryComponent::CollectItem(AActor* FormActor)
 {
 	// 1) 零信任校验：形态 Actor 必须有效
 	if (!IsValid(FormActor))
@@ -118,13 +115,8 @@ USingularisItem* USingularisInventoryComponent::CollectItem(
 	if (Item == nullptr)
 		return nullptr;
 
-	// 4) 销毁形态 Actor
+	// 4) 销毁形态 Actor，返回物品实例（容器路由由调用方 / PickupItem 负责）
 	FormActor->Destroy();
-
-	// 5) 提供目标容器则尝试入容器；满或未提供容器时返回实例由调用方处置
-	if (IsValid(TargetContainer))
-		TargetContainer->AddItem(Item);
-
 	return Item;
 }
 
@@ -144,26 +136,43 @@ USingularisItem* USingularisInventoryComponent::PickupItem(AActor* FormActor)
 	return Item;
 }
 
-void USingularisInventoryComponent::DropSelectedItem(const int32 SlotIndex)
+void USingularisInventoryComponent::DropItem(USingularisItem* Item)
 {
-	// 1) 取口袋与所控 Character
+	// 1) 零信任校验：物品实例与所控 Character 必须有效
+	if (!IsValid(Item))
+		return;
 	USingularisPocketComponent* Pocket = GetPocketComponent();
 	const ACharacter* Character = GetControlledCharacter();
 	if (!IsValid(Pocket) || !IsValid(Character))
 		return;
 
-	// 2) 从口袋取出物品（relinquish 持有），避免与形态 Actor 双重持有
-	USingularisItem* Item = Pocket->RemoveItemAt(SlotIndex);
-	if (Item == nullptr)
+	// 2) 从口袋移除指定物品（relinquish 持有），避免与形态 Actor 双重持有
+	if (!Pocket->RemoveItem(Item))
 		return;
 
 	// 3) 生成入世界至角色前方（绑定到形态 Actor 的 ItemComponent）
 	SpawnItemInWorld(Item, ComputeDropTransform(Character));
 }
 
-void USingularisInventoryComponent::Server_DropSelectedItem_Implementation(const int32 SlotIndex)
+void USingularisInventoryComponent::DropHeldItem()
 {
-	DropSelectedItem(SlotIndex);
+	// 1) 仅本地控制器端：选中为本地行为
+	if (!OwnerPlayerController.IsValid() || !OwnerPlayerController->IsLocalController())
+		return;
+	USingularisPocketComponent* Pocket = GetPocketComponent();
+	if (!IsValid(Pocket))
+		return;
+
+	// 2) 读本地手持物品 → 经 RPC 上行服务端执行丢弃
+	USingularisItem* HeldItem = Pocket->GetSelectedItem();
+	if (!IsValid(HeldItem))
+		return;
+	Server_DropItem(HeldItem);
+}
+
+void USingularisInventoryComponent::Server_DropItem_Implementation(USingularisItem* Item)
+{
+	DropItem(Item);
 }
 
 void USingularisInventoryComponent::BindInputAction()
@@ -269,19 +278,8 @@ void USingularisInventoryComponent::HandleSelectSlot(const FInputActionValue& Va
 
 void USingularisInventoryComponent::HandleDropInputAction(const FInputActionValue& Value)
 {
-	if (!OwnerPlayerController.IsValid() || !OwnerPlayerController->IsLocalController())
-		return;
-
-	const USingularisPocketComponent* Pocket = GetPocketComponent();
-	if (!IsValid(Pocket))
-		return;
-
-	const int32 SlotIndex = Pocket->GetSelectedIndex();
-	if (SlotIndex == INDEX_NONE)
-		return;
-
-	// 丢弃需服务端执行（SpawnActor 服务端权威），经 RPC 上行
-	Server_DropSelectedItem(SlotIndex);
+	// 丢弃手持：读本地手持 → RPC 上行服务端（逻辑封装于 DropHeldItem）
+	DropHeldItem();
 }
 
 void USingularisInventoryComponent::OnPossessPawnChanged(APawn* OldPawn, APawn* NewPawn) const

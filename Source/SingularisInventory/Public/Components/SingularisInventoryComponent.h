@@ -22,8 +22,8 @@ struct FInputActionValue;
  * 规划易用 API（拾取 / 丢弃），并一条管输入（选中本地、丢弃走服务端 RPC）。
  * 下层 PocketComponent / ItemComponent / 查询子系统保持独立可用，开发者可不用本调度器自行实现。
  *
- * 不变式：突变 API（SpawnItemInWorld / CollectItem / PickupItem / DropSelectedItem）
- * 服务端权威，BlueprintAuthorityOnly 强制；选中为本地行为，不经服务端。
+ * 不变式：突变 API（SpawnItemInWorld / CollectItem / PickupItem / DropItem）
+ * 服务端权威，BlueprintAuthorityOnly 强制；DropHeldItem 为客户端入口（读本地手持 → RPC）；选中为本地行为，不经服务端。
  */
 UCLASS(
 	Blueprintable,
@@ -130,9 +130,8 @@ public:
 	AActor* SpawnItemInWorld(USingularisItem* Item, FTransform Transform);
 
 	/**
-	 * 从世界收容物品到容器。
-	 * 内部查找形态 Actor 上的 ItemComponent → TakeItem 取回实例 → Destroy 形态 Actor →
-	 * 提供目标容器则入容器，否则返回实例由调用方处置。
+	 * 从世界收容物品：查找形态 Actor 上的 ItemComponent → TakeItem 取回实例 → Destroy 形态 Actor → 返回实例。
+	 * 纯世界生命周期原语，不操纵容器；容器路由由 PickupItem 负责。
 	 * @return 收容后的物品实例；形态 Actor 无 ItemComponent 或无物品、入参非法返回 nullptr
 	 */
 	UFUNCTION(
@@ -141,7 +140,7 @@ public:
 		Category = "SingularisInventory|引力奇点物库存|API",
 		meta = (DisplayName = "收容物品出世界")
 	)
-	USingularisItem* CollectItem(AActor* FormActor, USingularisPocketComponent* TargetContainer = nullptr);
+	USingularisItem* CollectItem(AActor* FormActor);
 
 	/**
 	 * 拾取世界物品入库存。
@@ -157,16 +156,29 @@ public:
 	USingularisItem* PickupItem(AActor* FormActor);
 
 	/**
-	 * 丢弃指定插槽物品入世界（角色前方）。
-	 * RemoveItemAt 取出（口袋 relinquish 持有）→ SpawnItemInWorld 生成入世界。
+	 * 丢弃指定物品入世界（角色前方）。
+	 * Pocket->RemoveItem 取出（口袋 relinquish 持有）→ SpawnItemInWorld 生成入世界。
+	 * 服务端原语；客户端经 Server_DropItem RPC 触发。
 	 */
 	UFUNCTION(
 		BlueprintCallable,
 		BlueprintAuthorityOnly,
 		Category = "SingularisInventory|引力奇点物库存|API",
-		meta = (DisplayName = "丢弃物品")
+		meta = (DisplayName = "丢弃指定物品")
 	)
-	void DropSelectedItem(int32 SlotIndex);
+	void DropItem(USingularisItem* Item);
+
+	/**
+	 * 丢弃手持物品入世界。
+	 * 本地读所控口袋的选中物品 → 经 Server_DropItem RPC 上行服务端执行。
+	 * 选中为本地行为，服务端不持有选中态，故丢弃手持须由客户端发起。
+	 */
+	UFUNCTION(
+		BlueprintCallable,
+		Category = "SingularisInventory|引力奇点物库存|API",
+		meta = (DisplayName = "丢弃手持物品")
+	)
+	void DropHeldItem();
 
 #pragma endregion
 
@@ -174,7 +186,7 @@ private:
 #pragma region RPC
 
 	UFUNCTION(Server, Reliable)
-	void Server_DropSelectedItem(int32 SlotIndex);
+	void Server_DropItem(USingularisItem* Item);
 
 #pragma endregion
 
