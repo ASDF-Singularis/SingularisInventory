@@ -4,6 +4,7 @@
 
 #include "Configs/SingularisInventorySettings.h"
 #include "Objects/SingularisItem.h"
+#include "SingularisInventory.h"
 
 USingularisInventoryItemSubsystem::USingularisInventoryItemSubsystem() {}
 
@@ -20,7 +21,12 @@ void USingularisInventoryItemSubsystem::Deinitialize()
 UDataTable* USingularisInventoryItemSubsystem::GetItemTable() const
 {
 	const USingularisInventorySettings* Settings = GetDefault<USingularisInventorySettings>();
-	return IsValid(Settings) ? Settings->ItemTable.Get() : nullptr;
+	if (!IsValid(Settings) || !IsValid(Settings->ItemTable.Get()))
+	{
+		UE_LOG(LogSingularisInventory, Warning, TEXT("物品数据表无效，请在项目设置「Singularis → Singularis Inventory」中配置 ItemTable"));
+		return nullptr;
+	}
+	return Settings->ItemTable.Get();
 }
 
 const FSingularisItemRow* USingularisInventoryItemSubsystem::FindItemRow(const USingularisItem* Item) const
@@ -37,7 +43,7 @@ const FSingularisItemRow* USingularisInventoryItemSubsystem::FindItemRowByClass(
 {
 	UDataTable* ItemTable = GetItemTable();
 	if (!IsValid(ItemTable) || !IsValid(ItemClass.Get()))
-		return nullptr;
+		return nullptr; // 表无效时 GetItemTable 已记录日志；空入参不记
 
 	const UClass* ItemClassPtr = ItemClass.Get();
 	for (const auto& Pair : ItemTable->GetRowMap())
@@ -47,6 +53,7 @@ const FSingularisItemRow* USingularisInventoryItemSubsystem::FindItemRowByClass(
 			return Row;
 	}
 
+	UE_LOG(LogSingularisInventory, Warning, TEXT("物品类 %s 未在数据表中找到行，请检查物品数据配置"), *GetNameSafe(ItemClass.Get()));
 	return nullptr;
 }
 
