@@ -2,8 +2,8 @@
 
 #include <Net/UnrealNetwork.h>
 
-#include "Objects/SingularisItem.h"
 #include "SingularisInventory.h"
+#include "Objects/SingularisItem.h"
 
 USingularisPocketComponent::USingularisPocketComponent()
 {
@@ -85,14 +85,27 @@ int32 USingularisPocketComponent::AddItem(USingularisItem* Item)
 	}
 
 	// 2) 插槽与容量一致性校验：运行时修改 Capacity 需重新初始化（仅权威端校验）
-	if (GetOwner()->HasAuthority() && !ensureMsgf(Slots.Num() == Capacity, TEXT("[%s] AddItem：插槽数 %d 与容量 %d 失配"), *GetNameSafe(GetOwner()), Slots.Num(), Capacity))
+	if (GetOwner()->HasAuthority() && !ensureMsgf(
+		Slots.Num() == Capacity,
+		TEXT("[%s] AddItem：插槽数 %d 与容量 %d 失配"),
+		*GetNameSafe(GetOwner()),
+		Slots.Num(),
+		Capacity
+	))
 		return INDEX_NONE;
 
 	// 3) 幂等：物品已存在于此口袋，直接返回其所在插槽
 	const int32 ExistingSlot = FindSlotOfItem(Item);
 	if (ExistingSlot != INDEX_NONE)
 	{
-		UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] AddItem：物品 %s 已在插槽 %d"), *GetNameSafe(GetOwner()), *GetNameSafe(Item), ExistingSlot);
+		UE_LOG(
+			LogSingularisInventory,
+			Verbose,
+			TEXT("[%s] AddItem：物品 %s 已在插槽 %d"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(Item),
+			ExistingSlot
+		);
 		return ExistingSlot;
 	}
 
@@ -100,7 +113,13 @@ int32 USingularisPocketComponent::AddItem(USingularisItem* Item)
 	const int32 TargetSlot = FindFirstEmptySlot();
 	if (TargetSlot == INDEX_NONE)
 	{
-		UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] AddItem：口袋已满，物品 %s 未放入"), *GetNameSafe(GetOwner()), *GetNameSafe(Item));
+		UE_LOG(
+			LogSingularisInventory,
+			Verbose,
+			TEXT("[%s] AddItem：口袋已满，物品 %s 未放入"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(Item)
+		);
 		return INDEX_NONE;
 	}
 
@@ -108,7 +127,15 @@ int32 USingularisPocketComponent::AddItem(USingularisItem* Item)
 	RegisterSlotSubObject(TargetSlot);
 	BroadcastSlotTransition(TargetSlot, nullptr, Item);
 
-	UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] AddItem：物品 %s(%s) 放入插槽 %d"), *GetNameSafe(GetOwner()), *GetNameSafe(Item), *GetNameSafe(Item->GetClass()), TargetSlot);
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] AddItem：物品 %s(%s) 放入插槽 %d"),
+		*GetNameSafe(GetOwner()),
+		*GetNameSafe(Item),
+		*GetNameSafe(Item->GetClass()),
+		TargetSlot
+	);
 	return TargetSlot;
 }
 
@@ -117,7 +144,14 @@ bool USingularisPocketComponent::AddItemAt(USingularisItem* Item, const int32 Sl
 	// 1) 零信任校验：空入参或非法索引直接失败
 	if (Item == nullptr || !IsValidSlotIndex(SlotIndex))
 	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] AddItemAt：入参非法（物品 %s，索引 %d）"), *GetNameSafe(GetOwner()), *GetNameSafe(Item), SlotIndex);
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] AddItemAt：入参非法（物品 %s，索引 %d）"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(Item),
+			SlotIndex
+		);
 		return false;
 	}
 
@@ -129,7 +163,14 @@ bool USingularisPocketComponent::AddItemAt(USingularisItem* Item, const int32 Sl
 	}
 	if (FindSlotOfItem(Item) != INDEX_NONE)
 	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] AddItemAt：物品 %s 已在插槽 %d"), *GetNameSafe(GetOwner()), *GetNameSafe(Item), FindSlotOfItem(Item));
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] AddItemAt：物品 %s 已在插槽 %d"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(Item),
+			FindSlotOfItem(Item)
+		);
 		return false;
 	}
 
@@ -137,7 +178,15 @@ bool USingularisPocketComponent::AddItemAt(USingularisItem* Item, const int32 Sl
 	RegisterSlotSubObject(SlotIndex);
 	BroadcastSlotTransition(SlotIndex, nullptr, Item);
 
-	UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] AddItemAt：物品 %s(%s) 放入插槽 %d"), *GetNameSafe(GetOwner()), *GetNameSafe(Item), *GetNameSafe(Item->GetClass()), SlotIndex);
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] AddItemAt：物品 %s(%s) 放入插槽 %d"),
+		*GetNameSafe(GetOwner()),
+		*GetNameSafe(Item),
+		*GetNameSafe(Item->GetClass()),
+		SlotIndex
+	);
 	return true;
 }
 
@@ -152,7 +201,13 @@ bool USingularisPocketComponent::RemoveItem(USingularisItem* Item)
 	const int32 TargetSlot = FindSlotOfItem(Item);
 	if (TargetSlot == INDEX_NONE)
 	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] RemoveItem：物品 %s 不在口袋中"), *GetNameSafe(GetOwner()), *GetNameSafe(Item));
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] RemoveItem：物品 %s 不在口袋中"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(Item)
+		);
 		return false;
 	}
 
@@ -164,14 +219,26 @@ USingularisItem* USingularisPocketComponent::RemoveItemAt(const int32 SlotIndex)
 	// 1) 索引合法性校验
 	if (!IsValidSlotIndex(SlotIndex))
 	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] RemoveItemAt：索引 %d 非法"), *GetNameSafe(GetOwner()), SlotIndex);
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] RemoveItemAt：索引 %d 非法"),
+			*GetNameSafe(GetOwner()),
+			SlotIndex
+		);
 		return nullptr;
 	}
 
 	// 2) 空插槽安全返回
 	if (Slots[SlotIndex].IsEmpty())
 	{
-		UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] RemoveItemAt：插槽 %d 为空"), *GetNameSafe(GetOwner()), SlotIndex);
+		UE_LOG(
+			LogSingularisInventory,
+			Verbose,
+			TEXT("[%s] RemoveItemAt：插槽 %d 为空"),
+			*GetNameSafe(GetOwner()),
+			SlotIndex
+		);
 		return nullptr;
 	}
 
@@ -181,7 +248,15 @@ USingularisItem* USingularisPocketComponent::RemoveItemAt(const int32 SlotIndex)
 	Slots[SlotIndex].Item = nullptr;
 	BroadcastSlotTransition(SlotIndex, OldItem, nullptr);
 
-	UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] RemoveItemAt：物品 %s(%s) 移出插槽 %d"), *GetNameSafe(GetOwner()), *GetNameSafe(OldItem), *GetNameSafe(OldItem->GetClass()), SlotIndex);
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] RemoveItemAt：物品 %s(%s) 移出插槽 %d"),
+		*GetNameSafe(GetOwner()),
+		*GetNameSafe(OldItem),
+		*GetNameSafe(OldItem->GetClass()),
+		SlotIndex
+	);
 	return OldItem;
 }
 
@@ -205,7 +280,14 @@ void USingularisPocketComponent::SelectSlot(const int32 SlotIndex)
 	SelectedSlotIndex = SlotIndex;
 	OnSelectionChangedEvent.Broadcast(OldSlotIndex, SlotIndex);
 
-	UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] SelectSlot：选中 %d → %d"), *GetNameSafe(GetOwner()), OldSlotIndex, SlotIndex);
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] SelectSlot：选中 %d → %d"),
+		*GetNameSafe(GetOwner()),
+		OldSlotIndex,
+		SlotIndex
+	);
 }
 
 void USingularisPocketComponent::SelectNext()
@@ -225,7 +307,13 @@ void USingularisPocketComponent::SelectPrevious()
 {
 	if (Capacity <= 0)
 	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] SelectPrevious：容量 %d 无效"), *GetNameSafe(GetOwner()), Capacity);
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] SelectPrevious：容量 %d 无效"),
+			*GetNameSafe(GetOwner()),
+			Capacity
+		);
 		return;
 	}
 
@@ -239,7 +327,14 @@ void USingularisPocketComponent::SwapSlots(const int32 SlotIndexA, const int32 S
 	// 1) 两端均合法且不同才交换
 	if (!IsValidSlotIndex(SlotIndexA) || !IsValidSlotIndex(SlotIndexB) || SlotIndexA == SlotIndexB)
 	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] SwapSlots：索引非法（%d ↔ %d）"), *GetNameSafe(GetOwner()), SlotIndexA, SlotIndexB);
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] SwapSlots：索引非法（%d ↔ %d）"),
+			*GetNameSafe(GetOwner()),
+			SlotIndexA,
+			SlotIndexB
+		);
 		return;
 	}
 
@@ -253,12 +348,19 @@ void USingularisPocketComponent::SwapSlots(const int32 SlotIndexA, const int32 S
 	BroadcastSlotTransition(SlotIndexA, OldA, OldB);
 	BroadcastSlotTransition(SlotIndexB, OldB, OldA);
 
-	UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] SwapSlots：插槽 %d ↔ %d 交换完成"), *GetNameSafe(GetOwner()), SlotIndexA, SlotIndexB);
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] SwapSlots：插槽 %d ↔ %d 交换完成"),
+		*GetNameSafe(GetOwner()),
+		SlotIndexA,
+		SlotIndexB
+	);
 }
 
 void USingularisPocketComponent::Clear()
 {
-	int32 ClearedCount = 0;
+	auto ClearedCount = 0;
 
 	for (auto i = 0; i < Slots.Num(); ++i)
 	{

@@ -2,9 +2,9 @@
 
 #include <Engine/DataTable.h>
 
+#include "SingularisInventory.h"
 #include "Configs/SingularisInventorySettings.h"
 #include "Objects/SingularisItem.h"
-#include "SingularisInventory.h"
 
 USingularisInventoryItemSubsystem::USingularisInventoryItemSubsystem() {}
 

@@ -2,8 +2,8 @@
 
 #include <Net/UnrealNetwork.h>
 
-#include "Objects/SingularisItem.h"
 #include "SingularisInventory.h"
+#include "Objects/SingularisItem.h"
 
 USingularisItemComponent::USingularisItemComponent()
 {
@@ -59,14 +59,27 @@ void USingularisItemComponent::BindItem(USingularisItem* InItem)
 	// 2) 幂等：已持有同一实例则无副作用
 	if (Item == InItem)
 	{
-		UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] BindItem：物品 %s 已持有，忽略"), *GetNameSafe(GetOwner()), *GetNameSafe(InItem));
+		UE_LOG(
+			LogSingularisInventory,
+			Verbose,
+			TEXT("[%s] BindItem：物品 %s 已持有，忽略"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(InItem)
+		);
 		return;
 	}
 
 	// 3) 若已持有其他实例，先解除旧引用并广播取出，保证单一持有
 	if (Item != nullptr)
 	{
-		UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] BindItem：替换旧物品 %s → %s"), *GetNameSafe(GetOwner()), *GetNameSafe(Item.Get()), *GetNameSafe(InItem));
+		UE_LOG(
+			LogSingularisInventory,
+			Verbose,
+			TEXT("[%s] BindItem：替换旧物品 %s → %s"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(Item.Get()),
+			*GetNameSafe(InItem)
+		);
 		UnregisterItemSubObject();
 		OnItemReleasedEvent.Broadcast(Item.Get());
 		Item = nullptr;
@@ -77,7 +90,14 @@ void USingularisItemComponent::BindItem(USingularisItem* InItem)
 	RegisterItemSubObject();
 	OnItemBoundEvent.Broadcast(InItem);
 
-	UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] BindItem：物品 %s(%s) 绑定成功"), *GetNameSafe(GetOwner()), *GetNameSafe(InItem), *GetNameSafe(InItem->GetClass()));
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] BindItem：物品 %s(%s) 绑定成功"),
+		*GetNameSafe(GetOwner()),
+		*GetNameSafe(InItem),
+		*GetNameSafe(InItem->GetClass())
+	);
 }
 
 USingularisItem* USingularisItemComponent::TakeItem()
@@ -95,7 +115,14 @@ USingularisItem* USingularisItemComponent::TakeItem()
 	OnItemReleasedEvent.Broadcast(OutItem);
 	Item = nullptr;
 
-	UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] TakeItem：物品 %s(%s) 取出成功"), *GetNameSafe(GetOwner()), *GetNameSafe(OutItem), *GetNameSafe(OutItem->GetClass()));
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] TakeItem：物品 %s(%s) 取出成功"),
+		*GetNameSafe(GetOwner()),
+		*GetNameSafe(OutItem),
+		*GetNameSafe(OutItem->GetClass())
+	);
 	return OutItem;
 }
 
