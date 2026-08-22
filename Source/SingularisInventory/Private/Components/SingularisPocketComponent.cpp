@@ -44,9 +44,9 @@ void USingularisPocketComponent::BeginPlay()
 	// 3) 建立客户端 OnRep diff 的初始基线快照
 	PreviousSlotsSnapshot = Slots;
 
-	// 4) 默认选中首个插槽：选中为本地行为，两端独立执行
+	// 4) 默认选中首个插槽：延迟到下一帧执行，确保所有订阅者完成 BeginPlay 事件绑定
 	if (Capacity > 0)
-		SelectSlot(0);
+		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ThisClass::InitializeDefaultSelection);
 }
 
 void USingularisPocketComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -510,4 +510,17 @@ void USingularisPocketComponent::DiffAndBroadcastSlots()
 
 	// 2) 更新基线快照
 	PreviousSlotsSnapshot = Slots;
+}
+
+void USingularisPocketComponent::InitializeDefaultSelection()
+{
+	// 1) 容量无效则忽略，复用 SelectSlot 的幂等检查、广播与日志
+	if (Capacity <= 0)
+		return;
+
+	// 2) 仅当尚未选中时才设置默认选中，避免覆盖运行时已设置的选中状态
+	if (SelectedSlotIndex != INDEX_NONE)
+		return;
+
+	SelectSlot(0);
 }

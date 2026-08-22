@@ -121,6 +121,7 @@ public:
 
 #pragma endregion
 
+public:
 #pragma region ActorComponent Interface
 
 	virtual void BeginPlay() override;
@@ -308,6 +309,9 @@ private:
 
 	/** 将 Prev / Curr 两份插槽数组 diff，逐插槽触发过渡事件并更新 Prev 快照。 */
 	void DiffAndBroadcastSlots();
+
+	/** 默认选中首个插槽，延迟到下一帧执行确保所有订阅者完成 BeginPlay 绑定。 */
+	void InitializeDefaultSelection();
 
 #pragma endregion
 };
