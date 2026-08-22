@@ -20,7 +20,7 @@ void ASingularisItemFormActor::BeginPlay()
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] BeginPlay：形态 Actor 初始化完成，物品组件 %s"),
 		*GetNameSafe(this),
 		IsValid(ItemComponent) ? TEXT("已就绪") : TEXT("缺失")

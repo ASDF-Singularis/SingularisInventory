@@ -1,0 +1,2 @@
+﻿#include "Interfaces/SingularisItemFormActorInterface.h"
+

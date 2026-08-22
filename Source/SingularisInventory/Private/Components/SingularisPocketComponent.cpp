@@ -24,7 +24,7 @@ void USingularisPocketComponent::BeginPlay()
 	if (GetOwner()->HasAuthority())
 	{
 		InitializeSlots();
-		UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] 口袋插槽初始化完成，容量 %d"), *GetNameSafe(GetOwner()), Capacity);
+		UE_LOG(LogSingularisInventory, Display, TEXT("[%s] 口袋插槽初始化完成，容量 %d"), *GetNameSafe(GetOwner()), Capacity);
 	}
 
 	// 2) 建立客户端 OnRep diff 的初始基线快照
@@ -98,7 +98,7 @@ int32 USingularisPocketComponent::AddItem(USingularisItem* Item)
 	{
 		UE_LOG(
 			LogSingularisInventory,
-			Verbose,
+			Display,
 			TEXT("[%s] AddItem：物品 %s 已在插槽 %d"),
 			*GetNameSafe(GetOwner()),
 			*GetNameSafe(Item),
@@ -113,7 +113,7 @@ int32 USingularisPocketComponent::AddItem(USingularisItem* Item)
 	{
 		UE_LOG(
 			LogSingularisInventory,
-			Verbose,
+			Display,
 			TEXT("[%s] AddItem：口袋已满，物品 %s 未放入"),
 			*GetNameSafe(GetOwner()),
 			*GetNameSafe(Item)
@@ -127,7 +127,7 @@ int32 USingularisPocketComponent::AddItem(USingularisItem* Item)
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] AddItem：物品 %s(%s) 放入插槽 %d"),
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(Item),
@@ -178,7 +178,7 @@ bool USingularisPocketComponent::AddItemAt(USingularisItem* Item, const int32 Sl
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] AddItemAt：物品 %s(%s) 放入插槽 %d"),
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(Item),
@@ -232,7 +232,7 @@ USingularisItem* USingularisPocketComponent::RemoveItemAt(const int32 SlotIndex)
 	{
 		UE_LOG(
 			LogSingularisInventory,
-			Verbose,
+			Display,
 			TEXT("[%s] RemoveItemAt：插槽 %d 为空"),
 			*GetNameSafe(GetOwner()),
 			SlotIndex
@@ -248,7 +248,7 @@ USingularisItem* USingularisPocketComponent::RemoveItemAt(const int32 SlotIndex)
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] RemoveItemAt：物品 %s(%s) 移出插槽 %d"),
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(OldItem),
@@ -270,7 +270,7 @@ void USingularisPocketComponent::SelectSlot(const int32 SlotIndex)
 	// 2) 幂等：与当前选中相同则无副作用
 	if (SlotIndex == SelectedSlotIndex)
 	{
-		UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] SelectSlot：选中未变化（%d）"), *GetNameSafe(GetOwner()), SlotIndex);
+		UE_LOG(LogSingularisInventory, Display, TEXT("[%s] SelectSlot：选中未变化（%d）"), *GetNameSafe(GetOwner()), SlotIndex);
 		return;
 	}
 
@@ -280,7 +280,7 @@ void USingularisPocketComponent::SelectSlot(const int32 SlotIndex)
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] SelectSlot：选中 %d → %d"),
 		*GetNameSafe(GetOwner()),
 		OldSlotIndex,
@@ -348,7 +348,7 @@ void USingularisPocketComponent::SwapSlots(const int32 SlotIndexA, const int32 S
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] SwapSlots：插槽 %d ↔ %d 交换完成"),
 		*GetNameSafe(GetOwner()),
 		SlotIndexA,
@@ -372,7 +372,7 @@ void USingularisPocketComponent::Clear()
 		++ClearedCount;
 	}
 
-	UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] Clear：清空 %d 个插槽"), *GetNameSafe(GetOwner()), ClearedCount);
+	UE_LOG(LogSingularisInventory, Display, TEXT("[%s] Clear：清空 %d 个插槽"), *GetNameSafe(GetOwner()), ClearedCount);
 }
 
 void USingularisPocketComponent::OnRep_Slots()

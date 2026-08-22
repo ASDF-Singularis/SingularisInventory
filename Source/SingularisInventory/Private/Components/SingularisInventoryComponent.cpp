@@ -128,7 +128,7 @@ void USingularisInventoryComponent::BeginPlay()
 
 		UE_LOG(
 			LogSingularisInventory,
-			Verbose,
+			Display,
 			TEXT("[%s] BeginPlay：本地控制器初始化完成"),
 			*GetNameSafe(GetOwner())
 		);
@@ -153,7 +153,7 @@ void USingularisInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayRe
 
 		UE_LOG(
 			LogSingularisInventory,
-			Verbose,
+			Display,
 			TEXT("[%s] EndPlay：输入绑定与映射上下文已清理"),
 			*GetNameSafe(GetOwner())
 		);
@@ -231,7 +231,7 @@ AActor* USingularisInventoryComponent::SpawnItemInWorld(USingularisItem* Item, c
 	else
 		UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] SpawnItemInWorld：形态 Actor %s 无 ItemComponent，物品 %s 仅入世不可收容"),
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(FormActor),
@@ -240,7 +240,7 @@ AActor* USingularisInventoryComponent::SpawnItemInWorld(USingularisItem* Item, c
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] SpawnItemInWorld：物品 %s(%s) 生成入世界成功"),
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(Item),
@@ -283,7 +283,7 @@ USingularisItem* USingularisInventoryComponent::CollectItem(AActor* FormActor)
 	{
 		UE_LOG(
 			LogSingularisInventory,
-			Verbose,
+			Display,
 			TEXT("[%s] CollectItem：形态 Actor %s 无物品可收容"),
 			*GetNameSafe(GetOwner()),
 			*GetNameSafe(FormActor)
@@ -296,7 +296,7 @@ USingularisItem* USingularisInventoryComponent::CollectItem(AActor* FormActor)
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] CollectItem：物品 %s(%s) 收容成功，形态 Actor 已销毁"),
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(Item),
@@ -309,8 +309,7 @@ USingularisItem* USingularisInventoryComponent::PickupItem(AActor* FormActor)
 {
 	// 1) 收容出世界（TakeItem + Destroy），未指定容器，返回实例
 	USingularisItem* Item = CollectItem(FormActor);
-	if (Item == nullptr)
-		return nullptr; // CollectItem 已记录日志
+	if (Item == nullptr) return nullptr; // CollectItem 已记录日志
 
 	// 2) 按规则路由：口袋优先（满则返回实例，未来扩展背包兜底）
 	USingularisPocketComponent* Pocket = GetPocketComponent();
@@ -318,7 +317,7 @@ USingularisItem* USingularisInventoryComponent::PickupItem(AActor* FormActor)
 	{
 		UE_LOG(
 			LogSingularisInventory,
-			Verbose,
+			Display,
 			TEXT("[%s] PickupItem：物品 %s(%s) 已路由入口袋"),
 			*GetNameSafe(GetOwner()),
 			*GetNameSafe(Item),
@@ -330,7 +329,7 @@ USingularisItem* USingularisInventoryComponent::PickupItem(AActor* FormActor)
 	// 3) 未入容器：返回实例由调用方处置
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] PickupItem：物品 %s(%s) 未入口袋，交由调用方处置"),
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(Item),
@@ -380,7 +379,7 @@ void USingularisInventoryComponent::DropItem(USingularisItem* Item)
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] DropItem：物品 %s(%s) 已丢弃入世界"),
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(Item),
@@ -395,7 +394,7 @@ void USingularisInventoryComponent::DropHeldItem()
 	{
 		UE_LOG(
 			LogSingularisInventory,
-			Verbose,
+			Display,
 			TEXT("[%s] DropHeldItem：非本地控制者，跳过"),
 			*GetNameSafe(GetOwner())
 		);
@@ -419,7 +418,7 @@ void USingularisInventoryComponent::DropHeldItem()
 	{
 		UE_LOG(
 			LogSingularisInventory,
-			Verbose,
+			Display,
 			TEXT("[%s] DropHeldItem：无手持物品"),
 			*GetNameSafe(GetOwner())
 		);
@@ -429,7 +428,7 @@ void USingularisInventoryComponent::DropHeldItem()
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] DropHeldItem：手持物品 %s(%s) 已请求丢弃"),
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(HeldItem),
@@ -496,7 +495,7 @@ void USingularisInventoryComponent::BindInputAction()
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] BindInputAction：绑定完成（选中动作 %d 个，丢弃 %s）"),
 		*GetNameSafe(GetOwner()),
 		SelectSlotActions.Num(),

@@ -61,7 +61,7 @@ void USingularisItemComponent::BindItem(USingularisItem* InItem)
 	{
 		UE_LOG(
 			LogSingularisInventory,
-			Verbose,
+			Display,
 			TEXT("[%s] BindItem：物品 %s 已持有，忽略"),
 			*GetNameSafe(GetOwner()),
 			*GetNameSafe(InItem)
@@ -74,7 +74,7 @@ void USingularisItemComponent::BindItem(USingularisItem* InItem)
 	{
 		UE_LOG(
 			LogSingularisInventory,
-			Verbose,
+			Display,
 			TEXT("[%s] BindItem：替换旧物品 %s → %s"),
 			*GetNameSafe(GetOwner()),
 			*GetNameSafe(Item.Get()),
@@ -92,7 +92,7 @@ void USingularisItemComponent::BindItem(USingularisItem* InItem)
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] BindItem：物品 %s(%s) 绑定成功"),
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(InItem),
@@ -105,7 +105,7 @@ USingularisItem* USingularisItemComponent::TakeItem()
 	// 1) 空状态安全返回
 	if (Item == nullptr)
 	{
-		UE_LOG(LogSingularisInventory, Verbose, TEXT("[%s] TakeItem：无物品可取出"), *GetNameSafe(GetOwner()));
+		UE_LOG(LogSingularisInventory, Display, TEXT("[%s] TakeItem：无物品可取出"), *GetNameSafe(GetOwner()));
 		return nullptr;
 	}
 
@@ -117,7 +117,7 @@ USingularisItem* USingularisItemComponent::TakeItem()
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] TakeItem：物品 %s(%s) 取出成功"),
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(OutItem),

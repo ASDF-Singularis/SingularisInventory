@@ -14,6 +14,7 @@ class SINGULARISINVENTORY_API USingularisInventorySettings : public UDeveloperSe
 
 public:
 	UPROPERTY(
+		Config,
 		EditDefaultsOnly,
 		BlueprintReadOnly,
 		Category = "SingularisInventory|引力奇点物库存|参数",
@@ -22,7 +23,7 @@ public:
 			RequiredAssetDataTags = "RowStructure=/Script/SingularisInventory.SingularisItemRow"
 		)
 	)
-	TObjectPtr<UDataTable> ItemTable = nullptr;
+	TSoftObjectPtr<UDataTable> ItemTable = nullptr;
 
 	USingularisInventorySettings();
 

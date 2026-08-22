@@ -73,7 +73,7 @@ APlayerController* USingularisPocketWidgetComponent::ResolveOwningLocalPlayerCon
 	{
 		UE_LOG(
 			LogSingularisInventory,
-			Verbose,
+			Display,
 			TEXT("[%s] ResolveOwningLocalPlayerController：非本地控制者，跳过 UI"),
 			*GetNameSafe(GetOwner())
 		);
@@ -89,7 +89,7 @@ void USingularisPocketWidgetComponent::CreatePocketWidget()
 	//    避免为其他玩家复制的 Pawn 创建幽灵控件
 	APlayerController* PlayerController = ResolveOwningLocalPlayerController();
 	if (!IsValid(PlayerController))
-		return; // 非本地控制者，ResolveOwningLocalPlayerController 已记录 Verbose
+		return; // 非本地控制者，ResolveOwningLocalPlayerController 已记录 Display
 
 	// 2) 零信任校验：未配置控件类则跳过
 	if (!IsValid(PocketWidgetClass))
@@ -111,7 +111,7 @@ void USingularisPocketWidgetComponent::CreatePocketWidget()
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] CreatePocketWidget：控件 %s 创建成功并加入视口"),
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(PocketWidgetClass.Get())
@@ -155,7 +155,7 @@ void USingularisPocketWidgetComponent::ObservePocketComponent()
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] ObservePocketComponent：已绑定 %s 事件并完成全量拉取"),
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(PocketComponent)

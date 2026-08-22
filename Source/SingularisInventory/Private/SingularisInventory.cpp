@@ -23,7 +23,7 @@ void FSingularisInventoryModule::StartupModule()
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("StartupModule：着色器目录映射已注册 -> %s"),
 		*PluginShaderDir
 	);
@@ -31,7 +31,7 @@ void FSingularisInventoryModule::StartupModule()
 
 void FSingularisInventoryModule::ShutdownModule()
 {
-	UE_LOG(LogSingularisInventory, Verbose, TEXT("ShutdownModule：模块卸载"));
+	UE_LOG(LogSingularisInventory, Display, TEXT("ShutdownModule：模块卸载"));
 }
 
 #undef LOCTEXT_NAMESPACE

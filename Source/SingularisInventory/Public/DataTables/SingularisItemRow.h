@@ -26,6 +26,10 @@ struct FSingularisItemRow : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<USingularisItem> ItemClass = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		meta = (MustImplement = "/Script/SingularisInventory.SingularisItemFormActorInterface")
+	)
 	TSubclassOf<AActor> FormActorClass = nullptr;
 };

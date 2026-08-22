@@ -22,7 +22,6 @@ UCLASS(NotBlueprintable, BlueprintType)
 class SINGULARISINVENTORY_API USingularisInventoryItemSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
-
 public:
 #pragma region Constructors
 

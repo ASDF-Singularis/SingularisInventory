@@ -14,7 +14,7 @@ void USingularisInventoryItemSubsystem::Initialize(FSubsystemCollectionBase& Col
 
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] Initialize：物品查询子系统初始化完成"),
 		*GetNameSafe(this)
 	);
@@ -24,7 +24,7 @@ void USingularisInventoryItemSubsystem::Deinitialize()
 {
 	UE_LOG(
 		LogSingularisInventory,
-		Verbose,
+		Display,
 		TEXT("[%s] Deinitialize：物品查询子系统卸载"),
 		*GetNameSafe(this)
 	);
@@ -35,7 +35,7 @@ void USingularisInventoryItemSubsystem::Deinitialize()
 UDataTable* USingularisInventoryItemSubsystem::GetItemTable() const
 {
 	const USingularisInventorySettings* Settings = GetDefault<USingularisInventorySettings>();
-	if (!IsValid(Settings) || !IsValid(Settings->ItemTable.Get()))
+	if (!IsValid(Settings) || !IsValid(Settings->ItemTable.LoadSynchronous()))
 	{
 		UE_LOG(LogSingularisInventory, Warning, TEXT("物品数据表无效，请在项目设置「Singularis → Singularis Inventory」中配置 ItemTable"));
 		return nullptr;
@@ -52,7 +52,7 @@ const FSingularisItemRow* USingularisInventoryItemSubsystem::FindItemRow(const U
 }
 
 const FSingularisItemRow* USingularisInventoryItemSubsystem::FindItemRowByClass(
-	TSubclassOf<USingularisItem> ItemClass
+	const TSubclassOf<USingularisItem> ItemClass
 ) const
 {
 	UDataTable* ItemTable = GetItemTable();
@@ -84,7 +84,7 @@ bool USingularisInventoryItemSubsystem::TryGetItemRow(USingularisItem* Item, FSi
 }
 
 bool USingularisInventoryItemSubsystem::TryGetItemRowByClass(
-	TSubclassOf<USingularisItem> ItemClass,
+	const TSubclassOf<USingularisItem> ItemClass,
 	FSingularisItemRow& OutRow
 ) const
 {
@@ -105,7 +105,7 @@ TSubclassOf<AActor> USingularisInventoryItemSubsystem::GetFormActorClass(USingul
 }
 
 TSubclassOf<AActor> USingularisInventoryItemSubsystem::GetFormActorClassByClass(
-	TSubclassOf<USingularisItem> ItemClass
+	const TSubclassOf<USingularisItem> ItemClass
 ) const
 {
 	const FSingularisItemRow* Row = FindItemRowByClass(ItemClass);
@@ -118,7 +118,7 @@ UTexture2D* USingularisInventoryItemSubsystem::GetItemIcon(USingularisItem* Item
 	return Row != nullptr ? Row->Icon : nullptr;
 }
 
-UTexture2D* USingularisInventoryItemSubsystem::GetItemIconByClass(TSubclassOf<USingularisItem> ItemClass) const
+UTexture2D* USingularisInventoryItemSubsystem::GetItemIconByClass(const TSubclassOf<USingularisItem> ItemClass) const
 {
 	const FSingularisItemRow* Row = FindItemRowByClass(ItemClass);
 	return Row != nullptr ? Row->Icon : nullptr;
@@ -130,7 +130,7 @@ FText USingularisInventoryItemSubsystem::GetItemName(USingularisItem* Item) cons
 	return Row != nullptr ? Row->Name : FText{};
 }
 
-FText USingularisInventoryItemSubsystem::GetItemNameByClass(TSubclassOf<USingularisItem> ItemClass) const
+FText USingularisInventoryItemSubsystem::GetItemNameByClass(const TSubclassOf<USingularisItem> ItemClass) const
 {
 	const FSingularisItemRow* Row = FindItemRowByClass(ItemClass);
 	return Row != nullptr ? Row->Name : FText{};
@@ -142,7 +142,7 @@ FText USingularisInventoryItemSubsystem::GetItemDescription(USingularisItem* Ite
 	return Row != nullptr ? Row->Description : FText{};
 }
 
-FText USingularisInventoryItemSubsystem::GetItemDescriptionByClass(TSubclassOf<USingularisItem> ItemClass) const
+FText USingularisInventoryItemSubsystem::GetItemDescriptionByClass(const TSubclassOf<USingularisItem> ItemClass) const
 {
 	const FSingularisItemRow* Row = FindItemRowByClass(ItemClass);
 	return Row != nullptr ? Row->Description : FText{};
