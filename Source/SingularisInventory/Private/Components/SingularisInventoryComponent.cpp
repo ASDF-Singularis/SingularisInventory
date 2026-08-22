@@ -56,7 +56,7 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 	);
 
 	if (DropActionFinder.Succeeded())
-		DropInputAction = FirstPocketActionFinder.Object;
+		DropInputAction = DropActionFinder.Object;
 	else
 		UE_LOG(
 		LogSingularisInventory,
