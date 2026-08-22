@@ -11,10 +11,24 @@ USingularisInventoryItemSubsystem::USingularisInventoryItemSubsystem() {}
 void USingularisInventoryItemSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] Initialize：物品查询子系统初始化完成"),
+		*GetNameSafe(this)
+	);
 }
 
 void USingularisInventoryItemSubsystem::Deinitialize()
 {
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] Deinitialize：物品查询子系统卸载"),
+		*GetNameSafe(this)
+	);
+
 	Super::Deinitialize();
 }
 

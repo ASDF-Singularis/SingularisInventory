@@ -60,6 +60,14 @@ public:
 		EditDefaultsOnly,
 		BlueprintReadOnly,
 		Category = "SingularisInventory|引力奇点物库存|输入",
+		meta = (DisplayName = "输入优先级")
+	)
+	int32 InputPriority = 10;
+
+	UPROPERTY(
+		EditDefaultsOnly,
+		BlueprintReadOnly,
+		Category = "SingularisInventory|引力奇点物库存|输入",
 		meta = (DisplayName = "输入映射上下文")
 	)
 	TObjectPtr<UInputMappingContext> InputMappingContext = nullptr;
@@ -68,9 +76,9 @@ public:
 		EditDefaultsOnly,
 		BlueprintReadOnly,
 		Category = "SingularisInventory|引力奇点物库存|输入",
-		meta = (DisplayName = "输入优先级")
+		meta = (DisplayName = "丢弃输入动作")
 	)
-	int32 InputPriority = 10;
+	TObjectPtr<UInputAction> DropInputAction = nullptr;
 
 	/** 选中插槽输入动作数组，索引即插槽号（数字小键盘 1..N 映射到 0..N-1）。 */
 	UPROPERTY(
@@ -80,14 +88,6 @@ public:
 		meta = (DisplayName = "选中插槽输入动作")
 	)
 	TArray<TObjectPtr<UInputAction>> SelectSlotActions{};
-
-	UPROPERTY(
-		EditDefaultsOnly,
-		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物库存|输入",
-		meta = (DisplayName = "丢弃输入动作")
-	)
-	TObjectPtr<UInputAction> DropInputAction = nullptr;
 
 #pragma endregion
 

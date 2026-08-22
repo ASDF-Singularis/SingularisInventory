@@ -1,5 +1,6 @@
 ﻿#include "Actors/SingularisItemFormActor.h"
 
+#include "SingularisInventory.h"
 #include "Components/SingularisItemComponent.h"
 
 ASingularisItemFormActor::ASingularisItemFormActor()
@@ -16,6 +17,14 @@ ASingularisItemFormActor::ASingularisItemFormActor()
 void ASingularisItemFormActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] BeginPlay：形态 Actor 初始化完成，物品组件 %s"),
+		*GetNameSafe(this),
+		IsValid(ItemComponent) ? TEXT("已就绪") : TEXT("缺失")
+	);
 }
 
 void ASingularisItemFormActor::Tick(const float DeltaTime)

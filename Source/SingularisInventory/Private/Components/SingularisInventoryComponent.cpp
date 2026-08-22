@@ -11,6 +11,7 @@
 #include <GameFramework/Pawn.h>
 #include <GameFramework/PlayerController.h>
 
+#include "SingularisInventory.h"
 #include "Components/SingularisItemComponent.h"
 #include "Components/SingularisPocketComponent.h"
 #include "Objects/SingularisItem.h"
@@ -24,6 +25,85 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 	PrimaryComponentTick.bCanEverTick = false;
 
 	bAutoActivate = true;
+
+	static const ConstructorHelpers::FObjectFinder<UInputMappingContext> InputMappingContextFinder(
+		TEXT("/SingularisInventory/Inputs/IMC_Singularis_Inventory.IMC_Singularis_Inventory")
+	);
+	static const ConstructorHelpers::FObjectFinder<UInputAction> DropActionFinder(
+		TEXT("/SingularisInventory/Inputs/Actions/IA_Drop.IA_Drop")
+	);
+	static const ConstructorHelpers::FObjectFinder<UInputAction> FirstPocketActionFinder(
+		TEXT("/SingularisInventory/Inputs/Actions/IA_FirstPocket.IA_FirstPocket")
+	);
+	static const ConstructorHelpers::FObjectFinder<UInputAction> SecondPocketActionFinder(
+		TEXT("/SingularisInventory/Inputs/Actions/IA_SecondPocket.IA_SecondPocket")
+	);
+	static const ConstructorHelpers::FObjectFinder<UInputAction> ThirdPocketActionFinder(
+		TEXT("/SingularisInventory/Inputs/Actions/IA_ThirdPocket.IA_ThirdPocket")
+	);
+	static const ConstructorHelpers::FObjectFinder<UInputAction> FourthPocketActionFinder(
+		TEXT("/SingularisInventory/Inputs/Actions/IA_FourthPocket.IA_FourthPocket")
+	);
+
+	if (InputMappingContextFinder.Succeeded())
+		InputMappingContext = InputMappingContextFinder.Object;
+	else
+		UE_LOG(
+		LogSingularisInventory,
+		Error,
+		TEXT("默认输入映射上下文加载失败：%s"),
+		TEXT("/SingularisInventory/Inputs/IMC_Singularis_Inventory")
+	);
+
+	if (DropActionFinder.Succeeded())
+		DropInputAction = FirstPocketActionFinder.Object;
+	else
+		UE_LOG(
+		LogSingularisInventory,
+		Error,
+		TEXT("默认丢弃输入动作加载失败：%s"),
+		TEXT("/SingularisInventory/Inputs/Actions/IA_Drop")
+	);
+
+	if (FirstPocketActionFinder.Succeeded())
+		SelectSlotActions.Add(FirstPocketActionFinder.Object);
+	else
+		UE_LOG(
+		LogSingularisInventory,
+		Error,
+		TEXT("默认插槽 0 输入动作加载失败：%s"),
+		TEXT("/SingularisInventory/Inputs/Actions/IA_FirstPocket")
+	);
+
+	if (SecondPocketActionFinder.Succeeded())
+		SelectSlotActions.Add(SecondPocketActionFinder.Object);
+	else
+		UE_LOG(
+		LogSingularisInventory,
+		Error,
+		TEXT("默认插槽 1 输入动作加载失败：%s"),
+		TEXT("/SingularisInventory/Inputs/Actions/IA_SecondPocket")
+	);
+
+	if (ThirdPocketActionFinder.Succeeded())
+		SelectSlotActions.Add(ThirdPocketActionFinder.Object);
+	else
+		UE_LOG(
+		LogSingularisInventory,
+		Error,
+		TEXT("默认插槽 2 输入动作加载失败：%s"),
+		TEXT("/SingularisInventory/Inputs/Actions/IA_ThirdPocket")
+	);
+
+	if (FourthPocketActionFinder.Succeeded())
+		SelectSlotActions.Add(FourthPocketActionFinder.Object);
+	else
+		UE_LOG(
+		LogSingularisInventory,
+		Error,
+		TEXT("默认插槽 3 输入动作加载失败：%s"),
+		TEXT("/SingularisInventory/Inputs/Actions/IA_FourthPocket")
+	);
 }
 
 void USingularisInventoryComponent::BeginPlay()
@@ -32,7 +112,9 @@ void USingularisInventoryComponent::BeginPlay()
 
 	checkf(
 		GetOwner()->IsA<APlayerController>(),
-		TEXT("SingularisInventoryComponent: Owner not is PlayerController")
+		TEXT("[%s] Owner 非 PlayerController（实际：%s）"),
+		*GetNameSafe(GetOwner()),
+		*GetNameSafe(GetOwner()->GetClass())
 	);
 
 	OwnerPlayerController = Cast<APlayerController>(GetOwner());
@@ -43,6 +125,13 @@ void USingularisInventoryComponent::BeginPlay()
 	{
 		OwnerPlayerController->OnPossessedPawnChanged.AddDynamic(this, &ThisClass::OnPossessPawnChanged);
 		RefreshInputMappingContext();
+
+		UE_LOG(
+			LogSingularisInventory,
+			Verbose,
+			TEXT("[%s] BeginPlay：本地控制器初始化完成"),
+			*GetNameSafe(GetOwner())
+		);
 	}
 }
 
@@ -61,6 +150,13 @@ void USingularisInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayRe
 					Subsystem->RemoveMappingContext(InputMappingContext);
 			}
 		}
+
+		UE_LOG(
+			LogSingularisInventory,
+			Verbose,
+			TEXT("[%s] EndPlay：输入绑定与映射上下文已清理"),
+			*GetNameSafe(GetOwner())
+		);
 	}
 
 	Super::EndPlay(EndPlayReason);
@@ -70,32 +166,86 @@ AActor* USingularisInventoryComponent::SpawnItemInWorld(USingularisItem* Item, c
 {
 	// 1) 零信任校验：物品实例必须有效
 	if (!IsValid(Item))
+	{
+		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] SpawnItemInWorld：物品实例无效"), *GetNameSafe(GetOwner()));
 		return nullptr;
+	}
 
 	// 2) 经全局查询子系统取物品形态 Actor 类
 	const UGameInstance* GameInstance = GetWorld()->GetGameInstance();
 	if (!IsValid(GameInstance))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] SpawnItemInWorld：GameInstance 无效"),
+			*GetNameSafe(GetOwner())
+		);
 		return nullptr;
+	}
 	const USingularisInventoryItemSubsystem* ItemSubsystem = GameInstance->GetSubsystem<
 		USingularisInventoryItemSubsystem>();
 	if (!IsValid(ItemSubsystem))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] SpawnItemInWorld：物品查询子系统无效"),
+			*GetNameSafe(GetOwner())
+		);
 		return nullptr;
+	}
 	const TSubclassOf<AActor> FormActorClass = ItemSubsystem->GetFormActorClass(Item);
 	if (!IsValid(FormActorClass))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] SpawnItemInWorld：物品 %s 未配置形态 Actor 类"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(Item)
+		);
 		return nullptr;
+	}
 
 	// 3) 生成形态 Actor
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 	AActor* FormActor = GetWorld()->SpawnActor<AActor>(FormActorClass, Transform, SpawnParams);
 	if (!IsValid(FormActor))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] SpawnItemInWorld：形态 Actor %s 生成失败"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(FormActorClass)
+		);
 		return nullptr;
+	}
 
 	// 4) 查找 ItemComponent；找到则绑定物品实例（可收容），未找到则仅入世不可收容
 	USingularisItemComponent* ItemComponent = FormActor->FindComponentByClass<USingularisItemComponent>();
 	if (IsValid(ItemComponent))
 		ItemComponent->BindItem(Item);
+	else
+		UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] SpawnItemInWorld：形态 Actor %s 无 ItemComponent，物品 %s 仅入世不可收容"),
+		*GetNameSafe(GetOwner()),
+		*GetNameSafe(FormActor),
+		*GetNameSafe(Item)
+	);
 
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] SpawnItemInWorld：物品 %s(%s) 生成入世界成功"),
+		*GetNameSafe(GetOwner()),
+		*GetNameSafe(Item),
+		*GetNameSafe(Item->GetClass())
+	);
 	return FormActor;
 }
 
@@ -103,20 +253,55 @@ USingularisItem* USingularisInventoryComponent::CollectItem(AActor* FormActor)
 {
 	// 1) 零信任校验：形态 Actor 必须有效
 	if (!IsValid(FormActor))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] CollectItem：形态 Actor 无效"),
+			*GetNameSafe(GetOwner())
+		);
 		return nullptr;
+	}
 
 	// 2) 查找 ItemComponent；无则无可收容物品
 	USingularisItemComponent* ItemComponent = FormActor->FindComponentByClass<USingularisItemComponent>();
 	if (!IsValid(ItemComponent))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] CollectItem：形态 Actor %s 无 ItemComponent"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(FormActor)
+		);
 		return nullptr;
+	}
 
 	// 3) 取回物品实例；无物品则不销毁形态 Actor
 	USingularisItem* Item = ItemComponent->TakeItem();
 	if (Item == nullptr)
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Verbose,
+			TEXT("[%s] CollectItem：形态 Actor %s 无物品可收容"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(FormActor)
+		);
 		return nullptr;
+	}
 
 	// 4) 销毁形态 Actor，返回物品实例（容器路由由调用方 / PickupItem 负责）
 	FormActor->Destroy();
+
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] CollectItem：物品 %s(%s) 收容成功，形态 Actor 已销毁"),
+		*GetNameSafe(GetOwner()),
+		*GetNameSafe(Item),
+		*GetNameSafe(Item->GetClass())
+	);
 	return Item;
 }
 
@@ -125,14 +310,32 @@ USingularisItem* USingularisInventoryComponent::PickupItem(AActor* FormActor)
 	// 1) 收容出世界（TakeItem + Destroy），未指定容器，返回实例
 	USingularisItem* Item = CollectItem(FormActor);
 	if (Item == nullptr)
-		return nullptr;
+		return nullptr; // CollectItem 已记录日志
 
 	// 2) 按规则路由：口袋优先（满则返回实例，未来扩展背包兜底）
 	USingularisPocketComponent* Pocket = GetPocketComponent();
 	if (IsValid(Pocket) && Pocket->AddItem(Item) != INDEX_NONE)
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Verbose,
+			TEXT("[%s] PickupItem：物品 %s(%s) 已路由入口袋"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(Item),
+			*GetNameSafe(Item->GetClass())
+		);
 		return Item;
+	}
 
 	// 3) 未入容器：返回实例由调用方处置
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] PickupItem：物品 %s(%s) 未入口袋，交由调用方处置"),
+		*GetNameSafe(GetOwner()),
+		*GetNameSafe(Item),
+		*GetNameSafe(Item->GetClass())
+	);
 	return Item;
 }
 
@@ -140,34 +343,98 @@ void USingularisInventoryComponent::DropItem(USingularisItem* Item)
 {
 	// 1) 零信任校验：物品实例与所控 Character 必须有效
 	if (!IsValid(Item))
+	{
+		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] DropItem：物品实例无效"), *GetNameSafe(GetOwner()));
 		return;
+	}
 	USingularisPocketComponent* Pocket = GetPocketComponent();
 	const ACharacter* Character = GetControlledCharacter();
 	if (!IsValid(Pocket) || !IsValid(Character))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] DropItem：口袋或所控 Character 无效（口袋：%s，Character：%s）"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(Pocket),
+			*GetNameSafe(Character)
+		);
 		return;
+	}
 
 	// 2) 从口袋移除指定物品（relinquish 持有），避免与形态 Actor 双重持有
 	if (!Pocket->RemoveItem(Item))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] DropItem：物品 %s 不在口袋中，无法丢弃"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(Item)
+		);
 		return;
+	}
 
 	// 3) 生成入世界至角色前方（绑定到形态 Actor 的 ItemComponent）
 	SpawnItemInWorld(Item, ComputeDropTransform(Character));
+
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] DropItem：物品 %s(%s) 已丢弃入世界"),
+		*GetNameSafe(GetOwner()),
+		*GetNameSafe(Item),
+		*GetNameSafe(Item->GetClass())
+	);
 }
 
 void USingularisInventoryComponent::DropHeldItem()
 {
 	// 1) 仅本地控制器端：选中为本地行为
 	if (!OwnerPlayerController.IsValid() || !OwnerPlayerController->IsLocalController())
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Verbose,
+			TEXT("[%s] DropHeldItem：非本地控制者，跳过"),
+			*GetNameSafe(GetOwner())
+		);
 		return;
+	}
 	USingularisPocketComponent* Pocket = GetPocketComponent();
 	if (!IsValid(Pocket))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] DropHeldItem：未找到口袋组件"),
+			*GetNameSafe(GetOwner())
+		);
 		return;
+	}
 
 	// 2) 读本地手持物品 → 经 RPC 上行服务端执行丢弃
 	USingularisItem* HeldItem = Pocket->GetSelectedItem();
 	if (!IsValid(HeldItem))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Verbose,
+			TEXT("[%s] DropHeldItem：无手持物品"),
+			*GetNameSafe(GetOwner())
+		);
 		return;
+	}
 	Server_DropItem(HeldItem);
+
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] DropHeldItem：手持物品 %s(%s) 已请求丢弃"),
+		*GetNameSafe(GetOwner()),
+		*GetNameSafe(HeldItem),
+		*GetNameSafe(HeldItem->GetClass())
+	);
 }
 
 void USingularisInventoryComponent::Server_DropItem_Implementation(USingularisItem* Item)
@@ -184,7 +451,15 @@ void USingularisInventoryComponent::BindInputAction()
 		OwnerPlayerController->InputComponent
 	);
 	if (!IsValid(EnhancedInputComponent))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] BindInputAction：EnhancedInputComponent 无效"),
+			*GetNameSafe(GetOwner())
+		);
 		return;
+	}
 
 	// 1) 选中插槽：数组索引即插槽号
 	for (auto i = 0; i < SelectSlotActions.Num(); ++i)
@@ -211,6 +486,22 @@ void USingularisInventoryComponent::BindInputAction()
 			&USingularisInventoryComponent::HandleDropInputAction
 		);
 	}
+	else
+		UE_LOG(
+		LogSingularisInventory,
+		Warning,
+		TEXT("[%s] BindInputAction：丢弃输入动作未配置，丢弃功能不可用"),
+		*GetNameSafe(GetOwner())
+	);
+
+	UE_LOG(
+		LogSingularisInventory,
+		Verbose,
+		TEXT("[%s] BindInputAction：绑定完成（选中动作 %d 个，丢弃 %s）"),
+		*GetNameSafe(GetOwner()),
+		SelectSlotActions.Num(),
+		IsValid(DropInputAction) ? TEXT("已绑定") : TEXT("未绑定")
+	);
 }
 
 void USingularisInventoryComponent::RefreshInputMappingContext() const
@@ -224,7 +515,15 @@ void USingularisInventoryComponent::RefreshInputMappingContext() const
 		OwnerPlayerController->GetLocalPlayer()
 	);
 	if (!IsValid(Subsystem))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] RefreshInputMappingContext：EnhancedInput 本地玩家子系统无效"),
+			*GetNameSafe(GetOwner())
+		);
 		return;
+	}
 
 	if (GetControlledCharacter() != nullptr)
 		Subsystem->AddMappingContext(InputMappingContext, InputPriority);
@@ -268,7 +567,15 @@ void USingularisInventoryComponent::HandleSelectSlot(const FInputActionValue& Va
 
 	USingularisPocketComponent* Pocket = GetPocketComponent();
 	if (!IsValid(Pocket))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] HandleSelectSlot：未找到口袋组件"),
+			*GetNameSafe(GetOwner())
+		);
 		return;
+	}
 
 	// 选中为本地行为：客户端直接改本地 SelectedSlotIndex，不经服务端
 	Pocket->SelectSlot(SlotIndex);
