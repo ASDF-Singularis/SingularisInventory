@@ -33,6 +33,24 @@ class SINGULARISINVENTORY_API USingularisItemComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+#pragma region Parameter
+
+	/**
+	 * 形态 Actor 在世界中存在时承载的物品模板实例。
+	 * 仅用于编辑器放入地图的形态 Actor：BeginPlay 阶段权威端按模板物化出独立运行时实例并交由 BindItem 绑定。
+	 * 运行时 SpawnActor 路径由 SpawnItemInWorld 显式 BindItem，本字段被忽略。
+	 */
+	UPROPERTY(
+		Instanced,
+		EditDefaultsOnly,
+		BlueprintReadOnly,
+		Category = "SingularisInventory|引力奇点物品组件|参数",
+		meta = (DisplayName = "物品模板")
+	)
+	TObjectPtr<USingularisItem> ItemTemplate = nullptr;
+
+#pragma endregion
+
 #pragma region 事件分发器
 
 	UPROPERTY(

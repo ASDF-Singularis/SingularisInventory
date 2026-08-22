@@ -25,9 +25,23 @@ void USingularisPocketComponent::BeginPlay()
 	{
 		InitializeSlots();
 		UE_LOG(LogSingularisInventory, Display, TEXT("[%s] 口袋插槽初始化完成，容量 %d"), *GetNameSafe(GetOwner()), Capacity);
+
+		// 2) 设计期模板物化：按索引对应插槽顺序，物化 InitialItems 中的模板实例
+		for (auto i = 0; i < InitialItems.Num() && i < Slots.Num(); ++i)
+		{
+			USingularisItem* const Template = InitialItems[i];
+			if (!IsValid(Template))
+				continue;
+
+			USingularisItem* const Materialized = USingularisItem::MaterializeFromTemplate(GetWorld(), Template);
+			if (!IsValid(Materialized))
+				continue;
+
+			AddItemAt(Materialized, i);
+		}
 	}
 
-	// 2) 建立客户端 OnRep diff 的初始基线快照
+	// 3) 建立客户端 OnRep diff 的初始基线快照
 	PreviousSlotsSnapshot = Slots;
 }
 

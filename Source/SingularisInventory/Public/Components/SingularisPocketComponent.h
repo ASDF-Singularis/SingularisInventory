@@ -58,6 +58,19 @@ public:
 	)
 	int32 Capacity = 4;
 
+	/**
+	 * 口袋在 BeginPlay 阶段自动物化并放入对应索引插槽的初始物品模板数组。
+	 * 数组索引对应插槽索引；超出 Capacity 的元素忽略，空元素对应插槽留空。
+	 */
+	UPROPERTY(
+		Instanced,
+		EditDefaultsOnly,
+		BlueprintReadOnly,
+		Category = "SingularisInventory|引力奇点口袋组件|参数",
+		meta = (DisplayName = "初始物品")
+	)
+	TArray<TObjectPtr<USingularisItem>> InitialItems{};
+
 #pragma endregion
 
 #pragma region 事件分发器

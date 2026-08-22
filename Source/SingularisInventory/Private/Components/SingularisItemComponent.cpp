@@ -19,6 +19,18 @@ USingularisItemComponent::USingularisItemComponent()
 void USingularisItemComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// 1) 设计期模板物化：仅权威端、编辑器加载的形态 Actor、尚未持有物品时执行
+	//    SpawnItemInWorld 路径由调用方显式 BindItem，本分支不应触发
+	if (GetOwner()->HasAuthority()
+		&& GetOwner()->HasAllFlags(RF_WasLoaded)
+		&& !HasItem()
+		&& IsValid(ItemTemplate))
+	{
+		USingularisItem* const Materialized = USingularisItem::MaterializeFromTemplate(GetWorld(), ItemTemplate);
+		if (IsValid(Materialized))
+			BindItem(Materialized);
+	}
 }
 
 void USingularisItemComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
