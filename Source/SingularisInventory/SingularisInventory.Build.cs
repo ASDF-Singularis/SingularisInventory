@@ -12,9 +12,21 @@ public class SingularisInventory : ModuleRules
 				"CoreUObject",
 				"Engine",
 				"NetCore",
+				"Projects",
+
+				"RenderCore",
+				"Renderer",
+				"RHI",
+
+				"UMG",
+				"Slate",
+				"SlateCore",
 
 				"InputCore",
 				"EnhancedInput",
+
+				"EngineSettings",
+				"DeveloperSettings",
 
 				"GameplayTags"
 			]
