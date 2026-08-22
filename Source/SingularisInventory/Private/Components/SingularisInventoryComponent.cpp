@@ -311,19 +311,30 @@ USingularisItem* USingularisInventoryComponent::PickupItem(AActor* FormActor)
 	USingularisItem* Item = CollectItem(FormActor);
 	if (Item == nullptr) return nullptr; // CollectItem 已记录日志
 
-	// 2) 按规则路由：口袋优先（满则返回实例，未来扩展背包兜底）
+	// 2) 按规则路由入口袋：选中插槽为空则优放入选中插槽，否则寻找首个空插槽
 	USingularisPocketComponent* Pocket = GetPocketComponent();
-	if (IsValid(Pocket) && Pocket->AddItem(Item) != INDEX_NONE)
+	if (IsValid(Pocket))
 	{
-		UE_LOG(
-			LogSingularisInventory,
-			Display,
-			TEXT("[%s] PickupItem：物品 %s(%s) 已路由入口袋"),
-			*GetNameSafe(GetOwner()),
-			*GetNameSafe(Item),
-			*GetNameSafe(Item->GetClass())
-		);
-		return Item;
+		const int32 SelectedIndex = Pocket->GetSelectedIndex();
+		const bool bPlaced = SelectedIndex != INDEX_NONE
+			&& Pocket->GetItem(SelectedIndex) == nullptr
+			&& Pocket->AddItemAt(Item, SelectedIndex);
+
+		if (!bPlaced)
+			bPlaced = Pocket->AddItem(Item) != INDEX_NONE;
+
+		if (bPlaced)
+		{
+			UE_LOG(
+				LogSingularisInventory,
+				Display,
+				TEXT("[%s] PickupItem：物品 %s(%s) 已路由入口袋"),
+				*GetNameSafe(GetOwner()),
+				*GetNameSafe(Item),
+				*GetNameSafe(Item->GetClass())
+			);
+			return Item;
+		}
 	}
 
 	// 3) 未入容器：返回实例由调用方处置
@@ -400,7 +411,7 @@ void USingularisInventoryComponent::DropHeldItem()
 		);
 		return;
 	}
-	USingularisPocketComponent* Pocket = GetPocketComponent();
+	const USingularisPocketComponent* Pocket = GetPocketComponent();
 	if (!IsValid(Pocket))
 	{
 		UE_LOG(
