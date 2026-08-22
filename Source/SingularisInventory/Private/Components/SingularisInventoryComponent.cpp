@@ -316,7 +316,7 @@ USingularisItem* USingularisInventoryComponent::PickupItem(AActor* FormActor)
 	if (IsValid(Pocket))
 	{
 		const int32 SelectedIndex = Pocket->GetSelectedIndex();
-		const bool bPlaced = SelectedIndex != INDEX_NONE
+		bool bPlaced = SelectedIndex != INDEX_NONE
 			&& Pocket->GetItem(SelectedIndex) == nullptr
 			&& Pocket->AddItemAt(Item, SelectedIndex);
 
