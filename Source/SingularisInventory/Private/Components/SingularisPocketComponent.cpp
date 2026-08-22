@@ -43,6 +43,10 @@ void USingularisPocketComponent::BeginPlay()
 
 	// 3) 建立客户端 OnRep diff 的初始基线快照
 	PreviousSlotsSnapshot = Slots;
+
+	// 4) 默认选中首个插槽：选中为本地行为，两端独立执行
+	if (Capacity > 0)
+		SelectSlot(0);
 }
 
 void USingularisPocketComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
