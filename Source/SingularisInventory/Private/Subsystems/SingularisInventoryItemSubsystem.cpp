@@ -71,6 +71,31 @@ const FSingularisItemRow* USingularisInventoryItemSubsystem::FindItemRowByClass(
 	return nullptr;
 }
 
+const FSingularisItemRow* USingularisInventoryItemSubsystem::FindItemRowByFormActorClass(
+	const TSubclassOf<AActor> FormActorClass
+) const
+{
+	UDataTable* ItemTable = GetItemTable();
+	if (!IsValid(ItemTable) || !IsValid(FormActorClass.Get()))
+		return nullptr; // 表无效时 GetItemTable 已记录日志；空入参不记
+
+	const UClass* FormActorClassPtr = FormActorClass.Get();
+	for (const auto& Pair : ItemTable->GetRowMap())
+	{
+		const auto Row = reinterpret_cast<const FSingularisItemRow*>(Pair.Value);
+		if (IsValid(Row->FormActorClass) && Row->FormActorClass.Get() == FormActorClassPtr)
+			return Row;
+	}
+
+	UE_LOG(
+		LogSingularisInventory,
+		Warning,
+		TEXT("形态 Actor 类 %s 未在数据表中找到行，请检查物品数据配置"),
+		*GetNameSafe(FormActorClass.Get())
+	);
+	return nullptr;
+}
+
 bool USingularisInventoryItemSubsystem::TryGetItemRow(USingularisItem* Item, FSingularisItemRow& OutRow) const
 {
 	const FSingularisItemRow* Row = FindItemRow(Item);
@@ -89,6 +114,21 @@ bool USingularisInventoryItemSubsystem::TryGetItemRowByClass(
 ) const
 {
 	const FSingularisItemRow* Row = FindItemRowByClass(ItemClass);
+	if (Row == nullptr)
+	{
+		OutRow = FSingularisItemRow{};
+		return false;
+	}
+	OutRow = *Row;
+	return true;
+}
+
+bool USingularisInventoryItemSubsystem::TryGetItemRowByFormActorClass(
+	const TSubclassOf<AActor> FormActorClass,
+	FSingularisItemRow& OutRow
+) const
+{
+	const FSingularisItemRow* Row = FindItemRowByFormActorClass(FormActorClass);
 	if (Row == nullptr)
 	{
 		OutRow = FSingularisItemRow{};

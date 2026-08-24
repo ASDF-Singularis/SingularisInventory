@@ -19,8 +19,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemReleasedSignature, USingulari
  * 引力奇点物品组件。
  *
  * 挂载于物品在世界中的形态 Actor，承载并强持有 USingularisItem 物品实例。
- * 形态 Actor 生成时由生成方调用 BindItem 将物品实例移入；容器收容、离开 UWorld
- * 等场景由调用方调用 TakeItem 取出物品实例后再销毁形态 Actor。
+ * 地图放置的形态 Actor 在 BeginPlay 阶段以自身（Owner）类经物品查询子系统映射出物品类型并物化绑定；
+ * 运行时生成路径由生成方调用 BindItem 将物品实例移入。
+ * 容器收容、离开 UWorld 等场景由调用方调用 TakeItem 取出物品实例后再销毁形态 Actor。
  */
 UCLASS(
 	Blueprintable,
@@ -33,24 +34,6 @@ class SINGULARISINVENTORY_API USingularisItemComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
-#pragma region Parameter
-
-	/**
-	 * 形态 Actor 在世界中存在时承载的物品模板实例。
-	 * 仅用于编辑器放入地图的形态 Actor：BeginPlay 阶段权威端按模板物化出独立运行时实例并交由 BindItem 绑定。
-	 * 运行时 SpawnActor 路径由 SpawnItemInWorld 显式 BindItem，本字段被忽略。
-	 */
-	UPROPERTY(
-		Instanced,
-		EditDefaultsOnly,
-		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物品组件|参数",
-		meta = (DisplayName = "物品模板")
-	)
-	TObjectPtr<USingularisItem> ItemTemplate = nullptr;
-
-#pragma endregion
-
 #pragma region 事件分发器
 
 	UPROPERTY(

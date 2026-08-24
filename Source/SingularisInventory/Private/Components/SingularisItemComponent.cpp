@@ -4,6 +4,7 @@
 
 #include "SingularisInventory.h"
 #include "Objects/SingularisItem.h"
+#include "Subsystems/SingularisInventoryItemSubsystem.h"
 
 USingularisItemComponent::USingularisItemComponent()
 {
@@ -20,14 +21,46 @@ void USingularisItemComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 1) 设计期模板物化：仅权威端、编辑器加载的形态 Actor、尚未持有物品时执行
+	// 1) 设计期按 Owner 类映射生成：仅权威端、编辑器加载的形态 Actor、尚未持有物品时执行
 	//    SpawnItemInWorld 路径由调用方显式 BindItem，本分支不应触发
 	if (GetOwner()->HasAuthority()
 		&& GetOwner()->HasAllFlags(RF_WasLoaded)
-		&& !HasItem()
-		&& IsValid(ItemTemplate))
+		&& !HasItem())
 	{
-		USingularisItem* const Materialized = USingularisItem::MaterializeFromTemplate(GetWorld(), ItemTemplate);
+		// 2) 经全局查询子系统按 Owner（形态 Actor）类映射物品类型，单一数据源为物品表行
+		const UGameInstance* const GameInstance = GetWorld()->GetGameInstance();
+		if (!IsValid(GameInstance))
+		{
+			UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] BeginPlay：GameInstance 无效"), *GetNameSafe(GetOwner()));
+			return;
+		}
+		const USingularisInventoryItemSubsystem* const ItemSubsystem =
+			GameInstance->GetSubsystem<USingularisInventoryItemSubsystem>();
+		if (!IsValid(ItemSubsystem))
+		{
+			UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] BeginPlay：物品查询子系统无效"), *GetNameSafe(GetOwner()));
+			return;
+		}
+		const FSingularisItemRow* const Row = ItemSubsystem->FindItemRowByFormActorClass(
+			TSubclassOf<AActor>(GetOwner()->GetClass())
+		);
+		if (Row == nullptr || !IsValid(Row->ItemClass))
+		{
+			UE_LOG(
+				LogSingularisInventory,
+				Warning,
+				TEXT("[%s] BeginPlay：形态类 %s 未映射到有效物品类，无法生成"),
+				*GetNameSafe(GetOwner()),
+				*GetNameSafe(GetOwner()->GetClass())
+			);
+			return;
+		}
+
+		// 3) 按映射得到的物品类物化独立运行时实例并绑定
+		USingularisItem* const Materialized = USingularisItem::MaterializeFromTemplate(
+			GetWorld(),
+			Row->ItemClass.GetDefaultObject()
+		);
 		if (IsValid(Materialized))
 			BindItem(Materialized);
 	}
