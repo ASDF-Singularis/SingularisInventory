@@ -6,6 +6,17 @@
 #include "SingularisPocketType.generated.h"
 
 /**
+ * 引力奇点口袋占用状态
+ */
+UENUM(BlueprintType)
+enum class ESingularisPocketOccupancy : uint8
+{
+	Empty UMETA(DisplayName = "空"),
+	Partial UMETA(DisplayName = "部分占用"),
+	Full UMETA(DisplayName = "已满"),
+};
+
+/**
  * 引力奇点口袋插槽
  */
 USTRUCT(BlueprintType)

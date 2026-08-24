@@ -44,7 +44,10 @@ void USingularisPocketComponent::BeginPlay()
 	// 3) 建立客户端 OnRep diff 的初始基线快照
 	PreviousSlotsSnapshot = Slots;
 
-	// 4) 默认选中首个插槽：延迟到下一帧执行，确保所有订阅者完成 BeginPlay 事件绑定
+	// 4) 基线化占用状态缓存，初始状态由观察者主动拉取
+	PreviousOccupancyState = GetOccupancyState();
+
+	// 5) 默认选中首个插槽：延迟到下一帧执行，确保所有订阅者完成 BeginPlay 事件绑定
 	if (Capacity > 0)
 		GetWorld()->GetTimerManager().SetTimerForNextTick(this, &ThisClass::InitializeDefaultSelection);
 }
@@ -77,6 +80,16 @@ bool USingularisPocketComponent::IsEmpty() const
 bool USingularisPocketComponent::IsFull() const
 {
 	return Slots.Num() == Capacity && FindFirstEmptySlot() == INDEX_NONE;
+}
+
+ESingularisPocketOccupancy USingularisPocketComponent::GetOccupancyState() const
+{
+	// 1) 空与满互斥，其余为部分占用
+	if (IsEmpty())
+		return ESingularisPocketOccupancy::Empty;
+	if (IsFull())
+		return ESingularisPocketOccupancy::Full;
+	return ESingularisPocketOccupancy::Partial;
 }
 
 USingularisItem* USingularisPocketComponent::GetItem(const int32 SlotIndex) const
@@ -142,6 +155,7 @@ int32 USingularisPocketComponent::AddItem(USingularisItem* Item)
 	Slots[TargetSlot].Item = Item;
 	RegisterSlotSubObject(TargetSlot);
 	BroadcastSlotTransition(TargetSlot, nullptr, Item);
+	BroadcastOccupancyChangeIfChanged();
 
 	UE_LOG(
 		LogSingularisInventory,
@@ -193,6 +207,7 @@ bool USingularisPocketComponent::AddItemAt(USingularisItem* Item, const int32 Sl
 	Slots[SlotIndex].Item = Item;
 	RegisterSlotSubObject(SlotIndex);
 	BroadcastSlotTransition(SlotIndex, nullptr, Item);
+	BroadcastOccupancyChangeIfChanged();
 
 	UE_LOG(
 		LogSingularisInventory,
@@ -263,6 +278,7 @@ USingularisItem* USingularisPocketComponent::RemoveItemAt(const int32 SlotIndex)
 	UnregisterSlotSubObject(SlotIndex);
 	Slots[SlotIndex].Item = nullptr;
 	BroadcastSlotTransition(SlotIndex, OldItem, nullptr);
+	BroadcastOccupancyChangeIfChanged();
 
 	UE_LOG(
 		LogSingularisInventory,
@@ -295,6 +311,12 @@ void USingularisPocketComponent::SelectSlot(const int32 SlotIndex)
 	const int32 OldSlotIndex = SelectedSlotIndex;
 	SelectedSlotIndex = SlotIndex;
 	OnSelectionChangedEvent.Broadcast(OldSlotIndex, SlotIndex);
+
+	// 3) 携带新旧选中物品广播手持变化（选中物品即手持物品）；守卫幂等：空槽切空槽不触发
+	USingularisItem* const OldItem = GetItem(OldSlotIndex);
+	USingularisItem* const NewItem = GetItem(SlotIndex);
+	if (OldItem != NewItem)
+		OnSelectedItemChangedEvent.Broadcast(OldItem, NewItem);
 
 	UE_LOG(
 		LogSingularisInventory,
@@ -364,6 +386,9 @@ void USingularisPocketComponent::SwapSlots(const int32 SlotIndexA, const int32 S
 	BroadcastSlotTransition(SlotIndexA, OldA, OldB);
 	BroadcastSlotTransition(SlotIndexB, OldB, OldA);
 
+	// 4) 广播交换事件，供观察者区分"交换"与"先移除再加入"
+	OnItemsSwappedEvent.Broadcast(SlotIndexA, SlotIndexB);
+
 	UE_LOG(
 		LogSingularisInventory,
 		Display,
@@ -389,6 +414,9 @@ void USingularisPocketComponent::Clear()
 		BroadcastSlotTransition(i, OldItem, nullptr);
 		++ClearedCount;
 	}
+
+	// 2) 广播清空可能触发的占用状态边界变化
+	BroadcastOccupancyChangeIfChanged();
 
 	UE_LOG(LogSingularisInventory, Display, TEXT("[%s] Clear：清空 %d 个插槽"), *GetNameSafe(GetOwner()), ClearedCount);
 }
@@ -477,23 +505,20 @@ void USingularisPocketComponent::BroadcastSlotTransition(
 	if (OldItem == NewItem)
 		return;
 
-	// 2) 既有又新：先移除后加入，保持原子顺序
+	// 2) 槽位原子过渡：既有又新（交换）先移除后加入
 	if (OldItem != nullptr && NewItem != nullptr)
 	{
 		OnItemRemovedEvent.Broadcast(SlotIndex, OldItem);
 		OnItemAddedEvent.Broadcast(SlotIndex, NewItem);
-		return;
 	}
-
-	// 3) 仅移除
-	if (OldItem != nullptr)
-	{
+	else if (OldItem != nullptr)
 		OnItemRemovedEvent.Broadcast(SlotIndex, OldItem);
-		return;
-	}
+	else
+		OnItemAddedEvent.Broadcast(SlotIndex, NewItem);
 
-	// 4) 仅加入
-	OnItemAddedEvent.Broadcast(SlotIndex, NewItem);
+	// 3) 选中槽内物品变化即手持变化（选中物品即手持物品）
+	if (SlotIndex == SelectedSlotIndex)
+		OnSelectedItemChangedEvent.Broadcast(OldItem, NewItem);
 }
 
 void USingularisPocketComponent::DiffAndBroadcastSlots()
@@ -510,6 +535,22 @@ void USingularisPocketComponent::DiffAndBroadcastSlots()
 
 	// 2) 更新基线快照
 	PreviousSlotsSnapshot = Slots;
+
+	// 3) 广播占用状态边界变化
+	BroadcastOccupancyChangeIfChanged();
+}
+
+void USingularisPocketComponent::BroadcastOccupancyChangeIfChanged()
+{
+	// 1) 计算新状态，与缓存比较，状态位未变化则无副作用
+	const ESingularisPocketOccupancy NewState = GetOccupancyState();
+	if (NewState == PreviousOccupancyState)
+		return;
+
+	// 2) 更新缓存并广播边界变化
+	const ESingularisPocketOccupancy OldState = PreviousOccupancyState;
+	PreviousOccupancyState = NewState;
+	OnPocketOccupancyChangedEvent.Broadcast(OldState, NewState);
 }
 
 void USingularisPocketComponent::InitializeDefaultSelection()

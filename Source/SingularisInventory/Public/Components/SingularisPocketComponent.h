@@ -19,6 +19,27 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemRemovedSignature, int32, Slo
 /** 选中插槽变化。空选 / 选空槽均合法，仅当索引变化时触发。 */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSelectionChangedSignature, int32, OldSlotIndex, int32, NewSlotIndex);
 
+/** 选中物品变化（选中物品即手持物品）。选中索引变化或选中槽内物品变化时触发，供装备 / 手持系统观察。 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
+	FOnSelectedItemChangedSignature,
+	USingularisItem*,
+	OldItem,
+	USingularisItem*,
+	NewItem
+);
+
+/** 两个插槽的物品发生交换。 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemsSwappedSignature, int32, SlotIndexA, int32, SlotIndexB);
+
+/** 口袋占用状态（空 / 部分 / 满）变化。 */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(
+	FOnPocketOccupancyChangedSignature,
+	ESingularisPocketOccupancy,
+	OldState,
+	ESingularisPocketOccupancy,
+	NewState
+);
+
 #pragma endregion
 
 /**
@@ -28,7 +49,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSelectionChangedSignature, int32
  * 以承担手持物品职责：选中插槽即手持目标，选中空槽即空手。
  *
  * 物品的进 / 出由调用方通过 AddItem / RemoveItem* 触发，内部自动管理网络复制子对象注册。
- * 事件按原子职责拆分：OnItemAdded / OnItemRemoved / OnSelectionChanged，观察者按需订阅、互不干扰。
+ * 事件按原子职责拆分：OnItemAdded / OnItemRemoved / OnSelectionChanged 为槽位与选中索引变化，
+ * OnSelectedItemChanged 为手持物品变化（选中物品即手持物品），OnItemsSwapped / OnPocketOccupancyChanged
+ * 为交换与占用状态边界，观察者按需订阅、互不干扰。
  *
  * 权威端：API 内直接触发事件。
  * 远程客户端：通过 OnRep 与上一帧快照 diff 触发等价事件，避免双触发。
@@ -96,6 +119,27 @@ public:
 	)
 	FOnSelectionChangedSignature OnSelectionChangedEvent{};
 
+	UPROPERTY(
+		BlueprintAssignable,
+		Category = "SingularisInventory|引力奇点口袋|事件分发器",
+		meta = (DisplayName = "选中物品变化")
+	)
+	FOnSelectedItemChangedSignature OnSelectedItemChangedEvent{};
+
+	UPROPERTY(
+		BlueprintAssignable,
+		Category = "SingularisInventory|引力奇点口袋|事件分发器",
+		meta = (DisplayName = "插槽交换")
+	)
+	FOnItemsSwappedSignature OnItemsSwappedEvent{};
+
+	UPROPERTY(
+		BlueprintAssignable,
+		Category = "SingularisInventory|引力奇点口袋|事件分发器",
+		meta = (DisplayName = "占用状态变化")
+	)
+	FOnPocketOccupancyChangedSignature OnPocketOccupancyChangedEvent{};
+
 #pragma endregion
 
 private:
@@ -112,6 +156,9 @@ private:
 	UPROPERTY(Transient)
 	TArray<FSingularisPocketSlot> PreviousSlotsSnapshot{};
 
+	/** 上一帧占用状态缓存，用于幂等边界检测，非复制。 */
+	ESingularisPocketOccupancy PreviousOccupancyState = ESingularisPocketOccupancy::Empty;
+
 #pragma endregion
 
 public:
@@ -121,7 +168,6 @@ public:
 
 #pragma endregion
 
-public:
 #pragma region ActorComponent Interface
 
 	virtual void BeginPlay() override;
@@ -173,6 +219,13 @@ public:
 		meta = (DisplayName = "获取选中物品")
 	)
 	USingularisItem* GetSelectedItem() const;
+
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点口袋|State",
+		meta = (DisplayName = "获取占用状态")
+	)
+	ESingularisPocketOccupancy GetOccupancyState() const;
 
 #pragma endregion
 
@@ -309,6 +362,9 @@ private:
 
 	/** 将 Prev / Curr 两份插槽数组 diff，逐插槽触发过渡事件并更新 Prev 快照。 */
 	void DiffAndBroadcastSlots();
+
+	/** 计算当前占用状态，与缓存比较，仅在状态位变化时广播事件并更新缓存。 */
+	void BroadcastOccupancyChangeIfChanged();
 
 	/** 默认选中首个插槽，延迟到下一帧执行确保所有订阅者完成 BeginPlay 绑定。 */
 	void InitializeDefaultSelection();
