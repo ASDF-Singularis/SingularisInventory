@@ -162,7 +162,7 @@ void USingularisInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayRe
 	Super::EndPlay(EndPlayReason);
 }
 
-AActor* USingularisInventoryComponent::SpawnItemInWorld(USingularisItem* Item, const FTransform Transform)
+AActor* USingularisInventoryComponent::SpawnItemInWorld(USingularisItem* Item, const FTransform Transform) const
 {
 	// 1) 零信任校验：物品实例必须有效
 	if (!IsValid(Item))
@@ -238,6 +238,22 @@ AActor* USingularisInventoryComponent::SpawnItemInWorld(USingularisItem* Item, c
 		*GetNameSafe(Item)
 	);
 
+	// 5) 开启物理
+	if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(FormActor->GetRootComponent()))
+	{
+		PrimitiveComponent->SetMobility(EComponentMobility::Movable);
+		PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		PrimitiveComponent->SetSimulatePhysics(true);
+
+		UE_LOG(
+			LogSingularisInventory,
+			Display,
+			TEXT("[%s] SpawnItemInWorld：形态 Actor %s 开启物理"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(FormActor)
+		);
+	}
+
 	UE_LOG(
 		LogSingularisInventory,
 		Display,
@@ -249,7 +265,7 @@ AActor* USingularisInventoryComponent::SpawnItemInWorld(USingularisItem* Item, c
 	return FormActor;
 }
 
-USingularisItem* USingularisInventoryComponent::CollectItem(AActor* FormActor)
+USingularisItem* USingularisInventoryComponent::CollectItem(AActor* FormActor) const
 {
 	// 1) 零信任校验：形态 Actor 必须有效
 	if (!IsValid(FormActor))

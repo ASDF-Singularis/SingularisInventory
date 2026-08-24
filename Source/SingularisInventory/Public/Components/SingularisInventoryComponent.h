@@ -127,7 +127,7 @@ public:
 		Category = "SingularisInventory|引力奇点物库存|API",
 		meta = (DisplayName = "生成物品入世界")
 	)
-	AActor* SpawnItemInWorld(USingularisItem* Item, FTransform Transform);
+	AActor* SpawnItemInWorld(USingularisItem* Item, FTransform Transform) const;
 
 	/**
 	 * 从世界收容物品：查找形态 Actor 上的 ItemComponent → TakeItem 取回实例 → Destroy 形态 Actor → 返回实例。
@@ -140,7 +140,7 @@ public:
 		Category = "SingularisInventory|引力奇点物库存|API",
 		meta = (DisplayName = "收容物品出世界")
 	)
-	USingularisItem* CollectItem(AActor* FormActor);
+	USingularisItem* CollectItem(AActor* FormActor) const;
 
 	/**
 	 * 拾取世界物品入库存。
