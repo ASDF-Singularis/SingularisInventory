@@ -21,7 +21,7 @@ class SINGULARISINVENTORY_API USingularisMaterialExpressionCurvedScreenUV : publ
 
 public:
 	/** 默认构造。仅用于初始化回退常量与材质编辑器分类。 */
-	USingularisMaterialExpressionCurvedScreenUV(const FObjectInitializer& ObjectInitializer);
+	USingularisMaterialExpressionCurvedScreenUV();
 
 	/** 待畸变的 UV 输入；未连接时默认使用纹理坐标 0。 */
 	UPROPERTY(meta = (RequiredInput = "false", ToolTip = "Defaults to texture coordinate 0 if not specified"))

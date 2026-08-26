@@ -4,10 +4,7 @@
 
 #define LOCTEXT_NAMESPACE "SingularisMaterialExpressionCurvedScreenUV"
 
-USingularisMaterialExpressionCurvedScreenUV::USingularisMaterialExpressionCurvedScreenUV(
-	const FObjectInitializer& ObjectInitializer
-)
-	: Super(ObjectInitializer)
+USingularisMaterialExpressionCurvedScreenUV::USingularisMaterialExpressionCurvedScreenUV()
 {
 	// 让节点在材质编辑器调色板中归入 "Singularis" 分类，便于查找
 	MenuCategories.Add(FText::FromString(TEXT("Singularis")));
