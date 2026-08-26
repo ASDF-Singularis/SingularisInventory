@@ -1,4 +1,4 @@
-#include "Subsystems/SingularisInventoryItemSubsystem.h"
+#include "Subsystems/SingularisInventorySubsystem.h"
 
 #include <Engine/DataTable.h>
 
@@ -6,9 +6,9 @@
 #include "Configs/SingularisInventorySettings.h"
 #include "Objects/SingularisItem.h"
 
-USingularisInventoryItemSubsystem::USingularisInventoryItemSubsystem() {}
+USingularisInventorySubsystem::USingularisInventorySubsystem() {}
 
-void USingularisInventoryItemSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+void USingularisInventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
@@ -20,7 +20,7 @@ void USingularisInventoryItemSubsystem::Initialize(FSubsystemCollectionBase& Col
 	);
 }
 
-void USingularisInventoryItemSubsystem::Deinitialize()
+void USingularisInventorySubsystem::Deinitialize()
 {
 	UE_LOG(
 		LogSingularisInventory,
@@ -32,7 +32,7 @@ void USingularisInventoryItemSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-UDataTable* USingularisInventoryItemSubsystem::GetItemTable() const
+UDataTable* USingularisInventorySubsystem::GetItemTable() const
 {
 	const USingularisInventorySettings* Settings = GetDefault<USingularisInventorySettings>();
 	if (!IsValid(Settings) || !IsValid(Settings->ItemTable.LoadSynchronous()))
@@ -43,7 +43,7 @@ UDataTable* USingularisInventoryItemSubsystem::GetItemTable() const
 	return Settings->ItemTable.Get();
 }
 
-const FSingularisItemRow* USingularisInventoryItemSubsystem::FindItemRow(const USingularisItem* Item) const
+const FSingularisItemRow* USingularisInventorySubsystem::FindItemRow(const USingularisItem* Item) const
 {
 	if (!IsValid(Item))
 		return nullptr;
@@ -51,7 +51,7 @@ const FSingularisItemRow* USingularisInventoryItemSubsystem::FindItemRow(const U
 	return FindItemRowByClass(TSubclassOf<USingularisItem>(Item->GetClass()));
 }
 
-const FSingularisItemRow* USingularisInventoryItemSubsystem::FindItemRowByClass(
+const FSingularisItemRow* USingularisInventorySubsystem::FindItemRowByClass(
 	const TSubclassOf<USingularisItem> ItemClass
 ) const
 {
@@ -71,7 +71,7 @@ const FSingularisItemRow* USingularisInventoryItemSubsystem::FindItemRowByClass(
 	return nullptr;
 }
 
-const FSingularisItemRow* USingularisInventoryItemSubsystem::FindItemRowByFormActorClass(
+const FSingularisItemRow* USingularisInventorySubsystem::FindItemRowByFormActorClass(
 	const TSubclassOf<AActor> FormActorClass
 ) const
 {
@@ -96,7 +96,7 @@ const FSingularisItemRow* USingularisInventoryItemSubsystem::FindItemRowByFormAc
 	return nullptr;
 }
 
-bool USingularisInventoryItemSubsystem::TryGetItemRow(USingularisItem* Item, FSingularisItemRow& OutRow) const
+bool USingularisInventorySubsystem::TryGetItemRow(USingularisItem* Item, FSingularisItemRow& OutRow) const
 {
 	const FSingularisItemRow* Row = FindItemRow(Item);
 	if (Row == nullptr)
@@ -108,7 +108,7 @@ bool USingularisInventoryItemSubsystem::TryGetItemRow(USingularisItem* Item, FSi
 	return true;
 }
 
-bool USingularisInventoryItemSubsystem::TryGetItemRowByClass(
+bool USingularisInventorySubsystem::TryGetItemRowByClass(
 	const TSubclassOf<USingularisItem> ItemClass,
 	FSingularisItemRow& OutRow
 ) const
@@ -123,7 +123,7 @@ bool USingularisInventoryItemSubsystem::TryGetItemRowByClass(
 	return true;
 }
 
-bool USingularisInventoryItemSubsystem::TryGetItemRowByFormActorClass(
+bool USingularisInventorySubsystem::TryGetItemRowByFormActorClass(
 	const TSubclassOf<AActor> FormActorClass,
 	FSingularisItemRow& OutRow
 ) const
@@ -138,13 +138,13 @@ bool USingularisInventoryItemSubsystem::TryGetItemRowByFormActorClass(
 	return true;
 }
 
-TSubclassOf<AActor> USingularisInventoryItemSubsystem::GetFormActorClass(USingularisItem* Item) const
+TSubclassOf<AActor> USingularisInventorySubsystem::GetFormActorClass(USingularisItem* Item) const
 {
 	const FSingularisItemRow* Row = FindItemRow(Item);
 	return Row != nullptr ? Row->FormActorClass : nullptr;
 }
 
-TSubclassOf<AActor> USingularisInventoryItemSubsystem::GetFormActorClassByClass(
+TSubclassOf<AActor> USingularisInventorySubsystem::GetFormActorClassByClass(
 	const TSubclassOf<USingularisItem> ItemClass
 ) const
 {
@@ -152,37 +152,37 @@ TSubclassOf<AActor> USingularisInventoryItemSubsystem::GetFormActorClassByClass(
 	return Row != nullptr ? Row->FormActorClass : nullptr;
 }
 
-UTexture2D* USingularisInventoryItemSubsystem::GetItemIcon(USingularisItem* Item) const
+UTexture2D* USingularisInventorySubsystem::GetItemIcon(USingularisItem* Item) const
 {
 	const FSingularisItemRow* Row = FindItemRow(Item);
 	return Row != nullptr ? Row->Icon : nullptr;
 }
 
-UTexture2D* USingularisInventoryItemSubsystem::GetItemIconByClass(const TSubclassOf<USingularisItem> ItemClass) const
+UTexture2D* USingularisInventorySubsystem::GetItemIconByClass(const TSubclassOf<USingularisItem> ItemClass) const
 {
 	const FSingularisItemRow* Row = FindItemRowByClass(ItemClass);
 	return Row != nullptr ? Row->Icon : nullptr;
 }
 
-FText USingularisInventoryItemSubsystem::GetItemName(USingularisItem* Item) const
+FText USingularisInventorySubsystem::GetItemName(USingularisItem* Item) const
 {
 	const FSingularisItemRow* Row = FindItemRow(Item);
 	return Row != nullptr ? Row->Name : FText{};
 }
 
-FText USingularisInventoryItemSubsystem::GetItemNameByClass(const TSubclassOf<USingularisItem> ItemClass) const
+FText USingularisInventorySubsystem::GetItemNameByClass(const TSubclassOf<USingularisItem> ItemClass) const
 {
 	const FSingularisItemRow* Row = FindItemRowByClass(ItemClass);
 	return Row != nullptr ? Row->Name : FText{};
 }
 
-FText USingularisInventoryItemSubsystem::GetItemDescription(USingularisItem* Item) const
+FText USingularisInventorySubsystem::GetItemDescription(USingularisItem* Item) const
 {
 	const FSingularisItemRow* Row = FindItemRow(Item);
 	return Row != nullptr ? Row->Description : FText{};
 }
 
-FText USingularisInventoryItemSubsystem::GetItemDescriptionByClass(const TSubclassOf<USingularisItem> ItemClass) const
+FText USingularisInventorySubsystem::GetItemDescriptionByClass(const TSubclassOf<USingularisItem> ItemClass) const
 {
 	const FSingularisItemRow* Row = FindItemRowByClass(ItemClass);
 	return Row != nullptr ? Row->Description : FText{};

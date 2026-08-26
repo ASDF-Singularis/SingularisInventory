@@ -4,7 +4,7 @@
 #include <Subsystems/GameInstanceSubsystem.h>
 
 #include "DataTables/SingularisItemRow.h"
-#include "SingularisInventoryItemSubsystem.generated.h"
+#include "SingularisInventorySubsystem.generated.h"
 
 class UDataTable;
 class USingularisItem;
@@ -12,21 +12,21 @@ class UTexture2D;
 class AActor;
 
 /**
- * 引力奇点物品查询子系统。
+ * 引力奇点库存子系统。
  *
  * 全局查询服务：以 USingularisInventorySettings 配置的物品表为数据源，
  * 提供按物品实例 / 类查询静态数据与形态 Actor 类的易用 API。
  * 蓝图经 GetGameInstanceSubsystem 节点可达。
  */
 UCLASS(NotBlueprintable, BlueprintType)
-class SINGULARISINVENTORY_API USingularisInventoryItemSubsystem : public UGameInstanceSubsystem
+class SINGULARISINVENTORY_API USingularisInventorySubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
 public:
 #pragma region Constructors
 
-	USingularisInventoryItemSubsystem();
+	USingularisInventorySubsystem();
 
 #pragma endregion
 

@@ -116,7 +116,7 @@ public:
 
 	/**
 	 * 将物品实例放入世界。
-	 * 经 USingularisInventoryItemSubsystem 查物品形态 Actor 类 → SpawnActor 形态 Actor → 绑定 ItemComponent。
+	 * 经 USingularisInventorySubsystem 查物品形态 Actor 类 → SpawnActor 形态 Actor → 绑定 ItemComponent。
 	 * 形态 Actor 蓝图未预先挂 ItemComponent 时，物品仅进入世界、不可收容。
 	 * 调用方须确保物品实例已从原持有方（如容器插槽）取出，避免重复持有。
 	 * @return 形态 Actor；物品类未在表中、查表失败或生成失败返回 nullptr

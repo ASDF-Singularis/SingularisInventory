@@ -4,7 +4,7 @@
 
 #include "SingularisInventory.h"
 #include "Objects/SingularisItem.h"
-#include "Subsystems/SingularisInventoryItemSubsystem.h"
+#include "Subsystems/SingularisInventorySubsystem.h"
 
 USingularisItemComponent::USingularisItemComponent()
 {
@@ -34,8 +34,8 @@ void USingularisItemComponent::BeginPlay()
 			UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] BeginPlay：GameInstance 无效"), *GetNameSafe(GetOwner()));
 			return;
 		}
-		const USingularisInventoryItemSubsystem* const ItemSubsystem =
-			GameInstance->GetSubsystem<USingularisInventoryItemSubsystem>();
+		const USingularisInventorySubsystem* const ItemSubsystem =
+			GameInstance->GetSubsystem<USingularisInventorySubsystem>();
 		if (!IsValid(ItemSubsystem))
 		{
 			UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] BeginPlay：物品查询子系统无效"), *GetNameSafe(GetOwner()));

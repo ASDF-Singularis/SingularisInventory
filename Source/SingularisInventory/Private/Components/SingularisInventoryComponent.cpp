@@ -15,7 +15,7 @@
 #include "Components/SingularisItemComponent.h"
 #include "Components/SingularisPocketComponent.h"
 #include "Objects/SingularisItem.h"
-#include "Subsystems/SingularisInventoryItemSubsystem.h"
+#include "Subsystems/SingularisInventorySubsystem.h"
 
 USingularisInventoryComponent::USingularisInventoryComponent()
 {
@@ -183,8 +183,8 @@ AActor* USingularisInventoryComponent::SpawnItemInWorld(USingularisItem* Item, c
 		);
 		return nullptr;
 	}
-	const USingularisInventoryItemSubsystem* ItemSubsystem = GameInstance->GetSubsystem<
-		USingularisInventoryItemSubsystem>();
+	const USingularisInventorySubsystem* ItemSubsystem = GameInstance->GetSubsystem<
+		USingularisInventorySubsystem>();
 	if (!IsValid(ItemSubsystem))
 	{
 		UE_LOG(
