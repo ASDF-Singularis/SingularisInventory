@@ -2,6 +2,7 @@
 
 #include <EnhancedInputComponent.h>
 #include <EnhancedInputSubsystems.h>
+#include <InputActionValue.h>
 #include <InputMappingContext.h>
 #include <Engine/GameInstance.h>
 #include <Engine/LocalPlayer.h>
@@ -15,6 +16,8 @@
 #include "Components/SingularisPocketComponent.h"
 #include "Objects/SingularisItem.h"
 #include "Subsystems/SingularisInventorySubsystem.h"
+#include "Types/SingularisInventoryGameplayTags.h"
+#include "Types/SingularisItemType.h"
 
 USingularisInventoryComponent::USingularisInventoryComponent()
 {
@@ -42,6 +45,9 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 	);
 	static const ConstructorHelpers::FObjectFinder<UInputAction> FourthPocketActionFinder(
 		TEXT("/SingularisInventory/Inputs/Actions/IA_FourthPocket.IA_FourthPocket")
+	);
+	static const ConstructorHelpers::FObjectFinder<UInputAction> ItemActionFinder(
+		TEXT("/SingularisInventory/Inputs/Actions/IA_ItemAction.IA_ItemAction")
 	);
 
 	if (InputMappingContextFinder.Succeeded())
@@ -103,6 +109,16 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 		TEXT("默认插槽 3 输入动作加载失败：%s"),
 		TEXT("/SingularisInventory/Inputs/Actions/IA_FourthPocket")
 	);
+
+	if (ItemActionFinder.Succeeded())
+		ItemActionInputs.Add({ItemActionFinder.Object, SingularisInventory_ItemAction_Default});
+	else
+		UE_LOG(
+		LogSingularisInventory,
+		Error,
+		TEXT("默认物品动作输入加载失败：%s"),
+		TEXT("/SingularisInventory/Inputs/Actions/IA_ItemAction")
+	);
 }
 
 void USingularisInventoryComponent::BeginPlay()
@@ -140,12 +156,12 @@ void USingularisInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayRe
 	{
 		OwnerPlayerController->OnPossessedPawnChanged.RemoveDynamic(this, &ThisClass::OnPossessPawnChanged);
 
-		if (IsValid(InputMappingContext))
+		if (const ULocalPlayer* LocalPlayer = OwnerPlayerController->GetLocalPlayer())
 		{
-			if (const ULocalPlayer* LocalPlayer = OwnerPlayerController->GetLocalPlayer())
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+				ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LocalPlayer))
 			{
-				if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-					ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(LocalPlayer))
+				if (IsValid(InputMappingContext))
 					Subsystem->RemoveMappingContext(InputMappingContext);
 			}
 		}
@@ -313,6 +329,106 @@ void USingularisInventoryComponent::Server_DropItem_Implementation(USingularisIt
 	DropItem(Item);
 }
 
+void USingularisInventoryComponent::TriggerItemAction(
+	const FGameplayTag& ActionTag,
+	const FInputActionValue& InputValue
+)
+{
+	// 1) 仅本地控制器端：选中为本地行为
+	if (!OwnerPlayerController.IsValid() || !OwnerPlayerController->IsLocalController())
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Display,
+			TEXT("[%s] TriggerItemAction：非本地控制者，跳过"),
+			*GetNameSafe(GetOwner())
+		);
+		return;
+	}
+	const USingularisPocketComponent* Pocket = GetPocketComponent();
+	if (!IsValid(Pocket))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] TriggerItemAction：未找到口袋组件"),
+			*GetNameSafe(GetOwner())
+		);
+		return;
+	}
+
+	// 2) 读本地手持物品 → 经 RPC 上行服务端执行动作管线
+	USingularisItem* const HeldItem = Pocket->GetSelectedItem();
+	if (!IsValid(HeldItem))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Display,
+			TEXT("[%s] TriggerItemAction：无手持物品"),
+			*GetNameSafe(GetOwner())
+		);
+		return;
+	}
+	Server_TriggerItemAction(HeldItem, ActionTag, InputValue);
+
+	UE_LOG(
+		LogSingularisInventory,
+		Display,
+		TEXT("[%s] TriggerItemAction：手持物品 %s(%s) 已请求触发"),
+		*GetNameSafe(GetOwner()),
+		*GetNameSafe(HeldItem),
+		*GetNameSafe(HeldItem->GetClass())
+	);
+}
+
+void USingularisInventoryComponent::Server_TriggerItemAction_Implementation(
+	USingularisItem* Item,
+	const FGameplayTag& ActionTag,
+	const FInputActionValue& InputValue
+)
+{
+	// 1) 零信任校验：物品实例与动作标签必须有效
+	if (!IsValid(Item))
+	{
+		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] Server_TriggerItemAction：物品实例无效"), *GetNameSafe(GetOwner()));
+		return;
+	}
+	if (!ActionTag.IsValid())
+	{
+		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] Server_TriggerItemAction：动作标签无效"), *GetNameSafe(GetOwner()));
+		return;
+	}
+
+	// 2) 校验物品仍在所控口袋中，防御越权调用 / 已移除物品
+	USingularisPocketComponent* Pocket = GetPocketComponent();
+	auto bInPocket = false;
+	if (IsValid(Pocket))
+	{
+		for (auto i = 0; i < Pocket->Capacity; ++i)
+		{
+			if (Pocket->GetItem(i) == Item)
+			{
+				bInPocket = true;
+				break;
+			}
+		}
+	}
+	if (!bInPocket)
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] Server_TriggerItemAction：物品 %s 不在所控口袋中"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(Item)
+		);
+		return;
+	}
+
+	// 3) 在权威物品实例上执行动作管线
+	Item->TryAction(ActionTag, OwnerPlayerController.Get(), GetControlledCharacter(), nullptr, InputValue);
+}
+
 void USingularisInventoryComponent::BindInputAction()
 {
 	if (!OwnerPlayerController.IsValid() || !OwnerPlayerController->IsLocalController())
@@ -365,21 +481,35 @@ void USingularisInventoryComponent::BindInputAction()
 		*GetNameSafe(GetOwner())
 	);
 
+	// 3) 物品动作：每个输入动作携带动作标签，触发即上行服务端执行
+	for (const FSingularisItemActionInput& ActionInput : ItemActionInputs)
+	{
+		if (!IsValid(ActionInput.InputAction) || !ActionInput.ActionTag.IsValid())
+			continue;
+
+		EnhancedInputComponent->BindAction(
+			ActionInput.InputAction,
+			ETriggerEvent::Started,
+			this,
+			&USingularisInventoryComponent::HandleItemActionInput,
+			ActionInput.ActionTag
+		);
+	}
+
 	UE_LOG(
 		LogSingularisInventory,
 		Display,
-		TEXT("[%s] BindInputAction：绑定完成（选中动作 %d 个，丢弃 %s）"),
+		TEXT("[%s] BindInputAction：绑定完成（选中动作 %d 个，丢弃 %s，动作输入 %d 个）"),
 		*GetNameSafe(GetOwner()),
 		SelectSlotActions.Num(),
-		IsValid(DropInputAction) ? TEXT("已绑定") : TEXT("未绑定")
+		IsValid(DropInputAction) ? TEXT("已绑定") : TEXT("未绑定"),
+		ItemActionInputs.Num()
 	);
 }
 
 void USingularisInventoryComponent::RefreshInputMappingContext() const
 {
 	if (!OwnerPlayerController.IsValid() || !OwnerPlayerController->IsLocalController())
-		return;
-	if (!IsValid(InputMappingContext))
 		return;
 
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(
@@ -396,10 +526,16 @@ void USingularisInventoryComponent::RefreshInputMappingContext() const
 		return;
 	}
 
-	if (GetControlledCharacter() != nullptr)
-		Subsystem->AddMappingContext(InputMappingContext, InputPriority);
-	else
-		Subsystem->RemoveMappingContext(InputMappingContext);
+	const ACharacter* const Character = GetControlledCharacter();
+
+	// 1) 通用映射上下文：随所控 Character 存在性增删
+	if (IsValid(InputMappingContext))
+	{
+		if (Character != nullptr)
+			Subsystem->AddMappingContext(InputMappingContext, InputPriority);
+		else
+			Subsystem->RemoveMappingContext(InputMappingContext);
+	}
 }
 
 ACharacter* USingularisInventoryComponent::GetControlledCharacter() const
@@ -458,6 +594,23 @@ void USingularisInventoryComponent::HandleDropInputAction(const FInputActionValu
 {
 	// 丢弃手持：读本地手持 → RPC 上行服务端（逻辑封装于 DropHeldItem）
 	DropHeldItem();
+}
+
+void USingularisInventoryComponent::HandleItemActionInput(
+	const FInputActionValue& Value,
+	const FGameplayTag ActionTag
+)
+{
+	if (!OwnerPlayerController.IsValid() || !OwnerPlayerController->IsLocalController())
+		return;
+	if (!ActionTag.IsValid())
+	{
+		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] HandleItemActionInput：动作标签无效"), *GetNameSafe(GetOwner()));
+		return;
+	}
+
+	// 触发手持物品动作：读本地手持 → RPC 上行服务端（逻辑封装于 TriggerItemAction）
+	TriggerItemAction(ActionTag, Value);
 }
 
 void USingularisInventoryComponent::OnPossessPawnChanged(APawn* OldPawn, APawn* NewPawn) const
