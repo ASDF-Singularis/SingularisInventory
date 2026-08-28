@@ -115,34 +115,6 @@ public:
 #pragma region API
 
 	/**
-	 * 将物品实例放入世界。
-	 * 经 USingularisInventorySubsystem 查物品形态 Actor 类 → SpawnActor 形态 Actor → 绑定 ItemComponent。
-	 * 形态 Actor 蓝图未预先挂 ItemComponent 时，物品仅进入世界、不可收容。
-	 * 调用方须确保物品实例已从原持有方（如容器插槽）取出，避免重复持有。
-	 * @return 形态 Actor；物品类未在表中、查表失败或生成失败返回 nullptr
-	 */
-	UFUNCTION(
-		BlueprintCallable,
-		BlueprintAuthorityOnly,
-		Category = "SingularisInventory|引力奇点物库存|API",
-		meta = (DisplayName = "生成物品入世界")
-	)
-	AActor* SpawnItemInWorld(USingularisItem* Item, FTransform Transform) const;
-
-	/**
-	 * 从世界收容物品：查找形态 Actor 上的 ItemComponent → TakeItem 取回实例 → Destroy 形态 Actor → 返回实例。
-	 * 纯世界生命周期原语，不操纵容器；容器路由由 PickupItem 负责。
-	 * @return 收容后的物品实例；形态 Actor 无 ItemComponent 或无物品、入参非法返回 nullptr
-	 */
-	UFUNCTION(
-		BlueprintCallable,
-		BlueprintAuthorityOnly,
-		Category = "SingularisInventory|引力奇点物库存|API",
-		meta = (DisplayName = "收容物品出世界")
-	)
-	USingularisItem* CollectItem(AActor* FormActor) const;
-
-	/**
 	 * 拾取世界物品入库存。
 	 * CollectItem 收容出世界 → 按规则路由入容器（当前口袋优先；满则返回实例，未来扩展背包兜底）。
 	 * @return 收容后的物品实例；入容器成功仍返回以便查询，未入容器时由调用方处置

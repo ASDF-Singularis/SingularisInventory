@@ -82,16 +82,6 @@ bool USingularisPocketComponent::IsFull() const
 	return Slots.Num() == Capacity && FindFirstEmptySlot() == INDEX_NONE;
 }
 
-ESingularisPocketOccupancy USingularisPocketComponent::GetOccupancyState() const
-{
-	// 1) 空与满互斥，其余为部分占用
-	if (IsEmpty())
-		return ESingularisPocketOccupancy::Empty;
-	if (IsFull())
-		return ESingularisPocketOccupancy::Full;
-	return ESingularisPocketOccupancy::Partial;
-}
-
 USingularisItem* USingularisPocketComponent::GetItem(const int32 SlotIndex) const
 {
 	if (!IsValidSlotIndex(SlotIndex))
@@ -102,6 +92,16 @@ USingularisItem* USingularisPocketComponent::GetItem(const int32 SlotIndex) cons
 USingularisItem* USingularisPocketComponent::GetSelectedItem() const
 {
 	return HasSelection() ? GetItem(SelectedSlotIndex) : nullptr;
+}
+
+ESingularisPocketOccupancy USingularisPocketComponent::GetOccupancyState() const
+{
+	// 1) 空与满互斥，其余为部分占用
+	if (IsEmpty())
+		return ESingularisPocketOccupancy::Empty;
+	if (IsFull())
+		return ESingularisPocketOccupancy::Full;
+	return ESingularisPocketOccupancy::Partial;
 }
 
 int32 USingularisPocketComponent::AddItem(USingularisItem* Item)
@@ -290,6 +290,19 @@ USingularisItem* USingularisPocketComponent::RemoveItemAt(const int32 SlotIndex)
 		SlotIndex
 	);
 	return OldItem;
+}
+
+USingularisItem* USingularisPocketComponent::RemoveSelectedItem()
+{
+	// 1) 无选中即无可移除物品
+	if (!HasSelection())
+	{
+		UE_LOG(LogSingularisInventory, Display, TEXT("[%s] RemoveSelectedItem：无选中插槽"), *GetNameSafe(GetOwner()));
+		return nullptr;
+	}
+
+	// 2) 复用 RemoveItemAt 的合法性校验、复制子对象注销与原子过渡广播
+	return RemoveItemAt(SelectedSlotIndex);
 }
 
 void USingularisPocketComponent::SelectSlot(const int32 SlotIndex)

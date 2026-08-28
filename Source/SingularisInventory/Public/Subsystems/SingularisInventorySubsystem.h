@@ -8,6 +8,7 @@
 
 class UDataTable;
 class USingularisItem;
+class USingularisPocketComponent;
 class UTexture2D;
 class AActor;
 
@@ -42,10 +43,128 @@ public:
 	/** 全局物品数据表。 */
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|查询",
+		Category = "SingularisInventory|引力奇点库存|API",
 		meta = (DisplayName = "获取物品数据表")
 	)
 	UDataTable* GetItemTable() const;
+
+	/** 按物品实例查整行；找到返回 true 并输出行数据。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点库存|API",
+		meta = (DisplayName = "获取物品数据行")
+	)
+	bool TryGetItemRow(USingularisItem* Item, FSingularisItemRow& OutRow) const;
+
+	/** 按物品类查整行。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点库存|API",
+		meta = (DisplayName = "按类获取物品数据行")
+	)
+	bool TryGetItemRowByClass(TSubclassOf<USingularisItem> ItemClass, FSingularisItemRow& OutRow) const;
+
+	/** 按形态 Actor 类查整行。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点库存|API",
+		meta = (DisplayName = "按形态Actor类获取物品数据行")
+	)
+	bool TryGetItemRowByFormActorClass(TSubclassOf<AActor> FormActorClass, FSingularisItemRow& OutRow) const;
+
+	/** 按物品实例查形态 Actor 类，未配置返回 nullptr。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点库存|API",
+		meta = (DisplayName = "获取物品形态Actor类")
+	)
+	TSubclassOf<AActor> GetFormActorClass(USingularisItem* Item) const;
+
+	/** 按物品类查形态 Actor 类。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点库存|API",
+		meta = (DisplayName = "按类获取物品形态Actor类")
+	)
+	TSubclassOf<AActor> GetFormActorClassByClass(TSubclassOf<USingularisItem> ItemClass) const;
+
+	/** 按物品实例查图标，未配置返回 nullptr。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点库存|API",
+		meta = (DisplayName = "获取物品图标")
+	)
+	UTexture2D* GetItemIcon(USingularisItem* Item) const;
+
+	/** 按物品类查图标。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点库存|API",
+		meta = (DisplayName = "按类获取物品图标")
+	)
+	UTexture2D* GetItemIconByClass(TSubclassOf<USingularisItem> ItemClass) const;
+
+	/** 按物品实例查名称，未配置返回空文本。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点库存|API",
+		meta = (DisplayName = "获取物品名称")
+	)
+	FText GetItemName(USingularisItem* Item) const;
+
+	/** 按物品类查名称。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点库存|API",
+		meta = (DisplayName = "按类获取物品名称")
+	)
+	FText GetItemNameByClass(TSubclassOf<USingularisItem> ItemClass) const;
+
+	/** 按物品实例查描述，未配置返回空文本。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点库存|API",
+		meta = (DisplayName = "获取物品描述")
+	)
+	FText GetItemDescription(USingularisItem* Item) const;
+
+	/** 按物品类查描述。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点库存|API",
+		meta = (DisplayName = "按类获取物品描述")
+	)
+	FText GetItemDescriptionByClass(TSubclassOf<USingularisItem> ItemClass) const;
+
+	/**
+	 * 生成物品入世界。
+	 * 经本子系统查物品形态 Actor 类 → SpawnActor 形态 Actor → 绑定 ItemComponent → 开启物理。
+	 * @return 形态 Actor；物品类未在表中、查表失败或生成失败返回 nullptr
+	 */
+	UFUNCTION(
+		BlueprintCallable,
+		BlueprintAuthorityOnly,
+		Category = "SingularisInventory|引力奇点库存|API",
+		meta = (DisplayName = "生成物品入世界")
+	)
+	AActor* SpawnItemInWorld(USingularisItem* Item, const FTransform& Transform) const;
+
+	/**
+	 * 从世界收容物品：查找形态 Actor 上的 ItemComponent → TakeItem 取回实例 → Destroy 形态 Actor → 返回实例。
+	 * 纯世界生命周期原语，不操纵容器；
+	 * @return 收容后的物品实例；形态 Actor 无 ItemComponent 或无物品、入参非法返回 nullptr
+	 */
+	UFUNCTION(
+		BlueprintCallable,
+		BlueprintAuthorityOnly,
+		Category = "SingularisInventory|引力奇点库存|API",
+		meta = (DisplayName = "收容物品出世界")
+	)
+	USingularisItem* CollectItem(AActor* FormActor) const;
+
+#pragma endregion
+
+#pragma region Internal Function
 
 	/** 按物品实例查行指针，未找到返回 nullptr（C++ 核心）。 */
 	const FSingularisItemRow* FindItemRow(const USingularisItem* Item) const;
@@ -55,94 +174,6 @@ public:
 
 	/** 按形态 Actor 类查行指针，未找到返回 nullptr（C++ 核心）。 */
 	const FSingularisItemRow* FindItemRowByFormActorClass(TSubclassOf<AActor> FormActorClass) const;
-
-	/** 按物品实例查整行；找到返回 true 并输出行数据。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|查询",
-		meta = (DisplayName = "获取物品数据行")
-	)
-	bool TryGetItemRow(USingularisItem* Item, FSingularisItemRow& OutRow) const;
-
-	/** 按物品类查整行。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|查询",
-		meta = (DisplayName = "按类获取物品数据行")
-	)
-	bool TryGetItemRowByClass(TSubclassOf<USingularisItem> ItemClass, FSingularisItemRow& OutRow) const;
-
-	/** 按形态 Actor 类查整行。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|查询",
-		meta = (DisplayName = "按形态Actor类获取物品数据行")
-	)
-	bool TryGetItemRowByFormActorClass(TSubclassOf<AActor> FormActorClass, FSingularisItemRow& OutRow) const;
-
-	/** 按物品实例查形态 Actor 类，未配置返回 nullptr。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|查询",
-		meta = (DisplayName = "获取物品形态Actor类")
-	)
-	TSubclassOf<AActor> GetFormActorClass(USingularisItem* Item) const;
-
-	/** 按物品类查形态 Actor 类。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|查询",
-		meta = (DisplayName = "按类获取物品形态Actor类")
-	)
-	TSubclassOf<AActor> GetFormActorClassByClass(TSubclassOf<USingularisItem> ItemClass) const;
-
-	/** 按物品实例查图标，未配置返回 nullptr。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|查询",
-		meta = (DisplayName = "获取物品图标")
-	)
-	UTexture2D* GetItemIcon(USingularisItem* Item) const;
-
-	/** 按物品类查图标。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|查询",
-		meta = (DisplayName = "按类获取物品图标")
-	)
-	UTexture2D* GetItemIconByClass(TSubclassOf<USingularisItem> ItemClass) const;
-
-	/** 按物品实例查名称，未配置返回空文本。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|查询",
-		meta = (DisplayName = "获取物品名称")
-	)
-	FText GetItemName(USingularisItem* Item) const;
-
-	/** 按物品类查名称。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|查询",
-		meta = (DisplayName = "按类获取物品名称")
-	)
-	FText GetItemNameByClass(TSubclassOf<USingularisItem> ItemClass) const;
-
-	/** 按物品实例查描述，未配置返回空文本。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|查询",
-		meta = (DisplayName = "获取物品描述")
-	)
-	FText GetItemDescription(USingularisItem* Item) const;
-
-	/** 按物品类查描述。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|查询",
-		meta = (DisplayName = "按类获取物品描述")
-	)
-	FText GetItemDescriptionByClass(TSubclassOf<USingularisItem> ItemClass) const;
 
 #pragma endregion
 };

@@ -278,6 +278,18 @@ public:
 	USingularisItem* RemoveItemAt(int32 SlotIndex);
 
 	/**
+	 * 移除选中插槽内的物品并返还实例，便于转移至容器 / 形态 Actor。
+	 * 移除后选中索引保持不变（选中空槽即空手）。
+	 * @return 被取出的物品实例；无选中或选中槽为空返回 nullptr
+	 */
+	UFUNCTION(
+		BlueprintCallable,
+		Category = "SingularisInventory|引力奇点口袋|API",
+		meta = (DisplayName = "移除选中物品")
+	)
+	USingularisItem* RemoveSelectedItem();
+
+	/**
 	 * 设置选中插槽。INDEX_NONE 清空选中；指向空槽即空手。
 	 * 幂等：与当前选中相同时无副作用。
 	 */
