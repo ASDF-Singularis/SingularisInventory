@@ -1,3 +1,3 @@
 #include "Objects/SingularisItemAction.h"
 
-void USingularisItemAction::Execute_Implementation(const FSingularisItemActionContext& Context) {}
+void USingularisItemAction::Trigger_Implementation(const FSingularisItemActionContext& Context) {}

@@ -28,7 +28,7 @@ public:
 		Category = "SingularisInventory|引力奇点物品动作|",
 		meta = (DisplayName = "执行动作")
 	)
-	void Execute(const FSingularisItemActionContext& Context);
+	void Trigger(const FSingularisItemActionContext& Context);
 
 #pragma endregion
 };

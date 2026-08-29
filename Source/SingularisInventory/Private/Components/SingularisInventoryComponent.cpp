@@ -13,6 +13,7 @@
 #include <GameFramework/PlayerController.h>
 
 #include "SingularisInventory.h"
+#include "Components/SingularisItemActionComponent.h"
 #include "Components/SingularisPocketComponent.h"
 #include "Objects/SingularisItem.h"
 #include "Subsystems/SingularisInventorySubsystem.h"
@@ -425,8 +426,22 @@ void USingularisInventoryComponent::Server_TriggerItemAction_Implementation(
 		return;
 	}
 
-	// 3) 在权威物品实例上执行动作管线
-	Item->TryAction(ActionTag, OwnerPlayerController.Get(), GetControlledCharacter(), nullptr, InputValue);
+	// 3) 经动作组件执行动作管线
+	USingularisItemActionComponent* ActionComponent = nullptr;
+	const ACharacter* Character = GetControlledCharacter();
+	if (IsValid(Character))
+		ActionComponent = Character->FindComponentByClass<USingularisItemActionComponent>();
+	if (!IsValid(ActionComponent))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] Server_TriggerItemAction：所控角色缺少物品动作组件"),
+			*GetNameSafe(GetOwner())
+		);
+		return;
+	}
+	ActionComponent->TryAction(Item, ActionTag, InputValue);
 }
 
 void USingularisInventoryComponent::BindInputAction()
