@@ -18,12 +18,12 @@ public:
 	USingularisItemDefinitionFactory();
 
 	virtual UObject* FactoryCreateNew(
-			UClass* InClass,
-			UObject* InParent,
-			FName InName,
-			EObjectFlags Flags,
-			UObject* Context,
-			FFeedbackContext* Warn
+		UClass* InClass,
+		UObject* InParent,
+		FName InName,
+		EObjectFlags Flags,
+		UObject* Context,
+		FFeedbackContext* Warn
 	) override;
 
 	virtual bool ShouldShowInNewMenu() const override;

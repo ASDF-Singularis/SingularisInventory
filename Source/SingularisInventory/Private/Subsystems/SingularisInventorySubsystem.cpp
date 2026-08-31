@@ -63,7 +63,8 @@ USingularisItemDefinition* USingularisInventorySubsystem::FindDefinitionByFormAc
 	for (const TSoftObjectPtr<USingularisItemDefinition>& DefinitionRef : Settings->ItemDefinitions)
 	{
 		USingularisItemDefinition* const Definition = DefinitionRef.LoadSynchronous();
-		if (IsValid(Definition) && IsValid(Definition->FormActorClass) && Definition->FormActorClass.Get() == FormActorClassPtr)
+		if (IsValid(Definition) && IsValid(Definition->FormActorClass) && Definition->FormActorClass.Get() ==
+			FormActorClassPtr)
 			return Definition;
 	}
 
@@ -130,13 +131,13 @@ AActor* USingularisInventorySubsystem::SpawnItemInWorld(USingularisItem* Item, c
 		ItemComponent->BindItem(Item);
 	else
 		UE_LOG(
-			LogSingularisInventory,
-			Display,
-			TEXT("[%s] SpawnItemInWorld：形态 Actor %s 无 ItemComponent，物品 %s 仅入世不可收容"),
-			*GetNameSafe(this),
-			*GetNameSafe(FormActor),
-			*GetNameSafe(Item)
-		);
+		LogSingularisInventory,
+		Display,
+		TEXT("[%s] SpawnItemInWorld：形态 Actor %s 无 ItemComponent，物品 %s 仅入世不可收容"),
+		*GetNameSafe(this),
+		*GetNameSafe(FormActor),
+		*GetNameSafe(Item)
+	);
 
 	// 6) 开启物理
 	if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(FormActor->GetRootComponent()))

@@ -1,8 +1,6 @@
 #include "Configs/SingularisInventorySettings.h"
 
-USingularisInventorySettings::USingularisInventorySettings()
-{
-}
+USingularisInventorySettings::USingularisInventorySettings() {}
 
 #if WITH_EDITOR
 
