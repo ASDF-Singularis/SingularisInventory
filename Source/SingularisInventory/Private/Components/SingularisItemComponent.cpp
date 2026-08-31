@@ -4,6 +4,7 @@
 
 #include "SingularisInventory.h"
 #include "Objects/SingularisItem.h"
+#include "Objects/SingularisItemDefinition.h"
 #include "Subsystems/SingularisInventorySubsystem.h"
 
 USingularisItemComponent::USingularisItemComponent()
@@ -41,26 +42,23 @@ void USingularisItemComponent::BeginPlay()
 			UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] BeginPlay：物品查询子系统无效"), *GetNameSafe(GetOwner()));
 			return;
 		}
-		const FSingularisItemRow* const Row = ItemSubsystem->FindItemRowByFormActorClass(
+		USingularisItemDefinition* const Definition = ItemSubsystem->FindDefinitionByFormActorClass(
 			TSubclassOf<AActor>(GetOwner()->GetClass())
 		);
-		if (Row == nullptr || !IsValid(Row->ItemClass))
+		if (!IsValid(Definition))
 		{
 			UE_LOG(
 				LogSingularisInventory,
 				Warning,
-				TEXT("[%s] BeginPlay：形态类 %s 未映射到有效物品类，无法生成"),
+				TEXT("[%s] BeginPlay：形态类 %s 未映射到物品定义，无法生成"),
 				*GetNameSafe(GetOwner()),
 				*GetNameSafe(GetOwner()->GetClass())
 			);
 			return;
 		}
 
-		// 3) 按映射得到的物品类物化独立运行时实例并绑定
-		USingularisItem* const Materialized = USingularisItem::MaterializeFromTemplate(
-			GetWorld(),
-			Row->ItemClass.GetDefaultObject()
-		);
+		// 3) 按映射得到的定义物化独立运行时实例并绑定
+		USingularisItem* const Materialized = USingularisItem::MaterializeFromDefinition(GetWorld(), Definition);
 		if (IsValid(Materialized))
 			BindItem(Materialized);
 	}

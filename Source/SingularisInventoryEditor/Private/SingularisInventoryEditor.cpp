@@ -2,9 +2,9 @@
 
 #include <AssetToolsModule.h>
 
-#include "Factories/SingularisItemActionFactory.h"
-#include "Factories/SingularisItemFactory.h"
+#include "Factories/SingularisItemDefinitionFactory.h"
 #include "Factories/SingularisItemFormActorFactory.h"
+#include "Factories/SingularisItemFragmentFactory.h"
 #include "Factories/SingularisPocketWidgetFactory.h"
 
 #define LOCTEXT_NAMESPACE "FSingularisInventoryEditorModule"
@@ -20,7 +20,7 @@ void FSingularisInventoryEditorModule::StartupModule()
 
 	RegisterAssetTypeAction(
 		AssetTools,
-		MakeShareable(new FAssetTypeActions_SingularisItem(SingularisPluginCategory))
+		MakeShareable(new FAssetTypeActions_SingularisItemDefinition(SingularisPluginCategory))
 	);
 
 	RegisterAssetTypeAction(
@@ -35,7 +35,7 @@ void FSingularisInventoryEditorModule::StartupModule()
 
 	RegisterAssetTypeAction(
 		AssetTools,
-		MakeShareable(new FAssetTypeActions_SingularisItemAction(SingularisPluginCategory))
+		MakeShareable(new FAssetTypeActions_SingularisItemFragment(SingularisPluginCategory))
 	);
 }
 

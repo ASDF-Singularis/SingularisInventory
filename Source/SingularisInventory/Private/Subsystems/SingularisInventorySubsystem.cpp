@@ -1,7 +1,6 @@
 #include "Subsystems/SingularisInventorySubsystem.h"
 
 #include <Components/PrimitiveComponent.h>
-#include <Engine/DataTable.h>
 #include <Engine/EngineTypes.h>
 #include <Engine/GameInstance.h>
 #include <Engine/World.h>
@@ -11,6 +10,7 @@
 #include "Components/SingularisItemComponent.h"
 #include "Configs/SingularisInventorySettings.h"
 #include "Objects/SingularisItem.h"
+#include "Objects/SingularisItemDefinition.h"
 
 USingularisInventorySubsystem::USingularisInventorySubsystem() {}
 
@@ -38,107 +38,42 @@ void USingularisInventorySubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-UDataTable* USingularisInventorySubsystem::GetItemTable() const
+USingularisItemDefinition* USingularisInventorySubsystem::GetItemDefinition(USingularisItem* Item) const
 {
+	return IsValid(Item) ? Item->GetDefinition() : nullptr;
+}
+
+USingularisItemDefinition* USingularisInventorySubsystem::FindDefinitionByFormActorClass(
+	const TSubclassOf<AActor> FormActorClass
+) const
+{
+	// 1) 零信任校验：形态 Actor 类必须有效
+	if (!IsValid(FormActorClass))
+		return nullptr;
+
 	const USingularisInventorySettings* Settings = GetDefault<USingularisInventorySettings>();
-	if (!IsValid(Settings) || !IsValid(Settings->ItemTable.LoadSynchronous()))
+	if (!IsValid(Settings))
 	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("物品数据表无效，请在项目设置「Singularis → Singularis Inventory」中配置 ItemTable"));
+		UE_LOG(LogSingularisInventory, Warning, TEXT("物品定义注册表设置无效"));
 		return nullptr;
 	}
-	return Settings->ItemTable.Get();
-}
 
-bool USingularisInventorySubsystem::TryGetItemRow(USingularisItem* Item, FSingularisItemRow& OutRow) const
-{
-	const FSingularisItemRow* Row = FindItemRow(Item);
-	if (Row == nullptr)
+	// 2) 扫描注册表匹配形态 Actor 类
+	const UClass* const FormActorClassPtr = FormActorClass.Get();
+	for (const TSoftObjectPtr<USingularisItemDefinition>& DefinitionRef : Settings->ItemDefinitions)
 	{
-		OutRow = FSingularisItemRow{};
-		return false;
+		USingularisItemDefinition* const Definition = DefinitionRef.LoadSynchronous();
+		if (IsValid(Definition) && IsValid(Definition->FormActorClass) && Definition->FormActorClass.Get() == FormActorClassPtr)
+			return Definition;
 	}
-	OutRow = *Row;
-	return true;
-}
 
-bool USingularisInventorySubsystem::TryGetItemRowByClass(
-	const TSubclassOf<USingularisItem> ItemClass,
-	FSingularisItemRow& OutRow
-) const
-{
-	const FSingularisItemRow* Row = FindItemRowByClass(ItemClass);
-	if (Row == nullptr)
-	{
-		OutRow = FSingularisItemRow{};
-		return false;
-	}
-	OutRow = *Row;
-	return true;
-}
-
-bool USingularisInventorySubsystem::TryGetItemRowByFormActorClass(
-	const TSubclassOf<AActor> FormActorClass,
-	FSingularisItemRow& OutRow
-) const
-{
-	const FSingularisItemRow* Row = FindItemRowByFormActorClass(FormActorClass);
-	if (Row == nullptr)
-	{
-		OutRow = FSingularisItemRow{};
-		return false;
-	}
-	OutRow = *Row;
-	return true;
-}
-
-TSubclassOf<AActor> USingularisInventorySubsystem::GetFormActorClass(USingularisItem* Item) const
-{
-	const FSingularisItemRow* Row = FindItemRow(Item);
-	return Row != nullptr ? Row->FormActorClass : nullptr;
-}
-
-TSubclassOf<AActor> USingularisInventorySubsystem::GetFormActorClassByClass(
-	const TSubclassOf<USingularisItem> ItemClass
-) const
-{
-	const FSingularisItemRow* Row = FindItemRowByClass(ItemClass);
-	return Row != nullptr ? Row->FormActorClass : nullptr;
-}
-
-UTexture2D* USingularisInventorySubsystem::GetItemIcon(USingularisItem* Item) const
-{
-	const FSingularisItemRow* Row = FindItemRow(Item);
-	return Row != nullptr ? Row->Icon : nullptr;
-}
-
-UTexture2D* USingularisInventorySubsystem::GetItemIconByClass(const TSubclassOf<USingularisItem> ItemClass) const
-{
-	const FSingularisItemRow* Row = FindItemRowByClass(ItemClass);
-	return Row != nullptr ? Row->Icon : nullptr;
-}
-
-FText USingularisInventorySubsystem::GetItemName(USingularisItem* Item) const
-{
-	const FSingularisItemRow* Row = FindItemRow(Item);
-	return Row != nullptr ? Row->Name : FText{};
-}
-
-FText USingularisInventorySubsystem::GetItemNameByClass(const TSubclassOf<USingularisItem> ItemClass) const
-{
-	const FSingularisItemRow* Row = FindItemRowByClass(ItemClass);
-	return Row != nullptr ? Row->Name : FText{};
-}
-
-FText USingularisInventorySubsystem::GetItemDescription(USingularisItem* Item) const
-{
-	const FSingularisItemRow* Row = FindItemRow(Item);
-	return Row != nullptr ? Row->Description : FText{};
-}
-
-FText USingularisInventorySubsystem::GetItemDescriptionByClass(const TSubclassOf<USingularisItem> ItemClass) const
-{
-	const FSingularisItemRow* Row = FindItemRowByClass(ItemClass);
-	return Row != nullptr ? Row->Description : FText{};
+	UE_LOG(
+		LogSingularisInventory,
+		Warning,
+		TEXT("形态 Actor 类 %s 未在物品定义注册表中找到，请检查物品定义配置"),
+		*GetNameSafe(FormActorClassPtr)
+	);
+	return nullptr;
 }
 
 AActor* USingularisInventorySubsystem::SpawnItemInWorld(USingularisItem* Item, const FTransform& Transform) const
@@ -158,8 +93,9 @@ AActor* USingularisInventorySubsystem::SpawnItemInWorld(USingularisItem* Item, c
 		return nullptr;
 	}
 
-	// 3) 查物品形态 Actor 类（本子系统内直接查行）
-	const TSubclassOf<AActor> FormActorClass = GetFormActorClass(Item);
+	// 3) 经物品实例背引用的定义查形态 Actor 类
+	USingularisItemDefinition* const Definition = GetItemDefinition(Item);
+	const TSubclassOf<AActor> FormActorClass = IsValid(Definition) ? Definition->FormActorClass : nullptr;
 	if (!IsValid(FormActorClass))
 	{
 		UE_LOG(
@@ -194,13 +130,13 @@ AActor* USingularisInventorySubsystem::SpawnItemInWorld(USingularisItem* Item, c
 		ItemComponent->BindItem(Item);
 	else
 		UE_LOG(
-		LogSingularisInventory,
-		Display,
-		TEXT("[%s] SpawnItemInWorld：形态 Actor %s 无 ItemComponent，物品 %s 仅入世不可收容"),
-		*GetNameSafe(this),
-		*GetNameSafe(FormActor),
-		*GetNameSafe(Item)
-	);
+			LogSingularisInventory,
+			Display,
+			TEXT("[%s] SpawnItemInWorld：形态 Actor %s 无 ItemComponent，物品 %s 仅入世不可收容"),
+			*GetNameSafe(this),
+			*GetNameSafe(FormActor),
+			*GetNameSafe(Item)
+		);
 
 	// 6) 开启物理
 	if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(FormActor->GetRootComponent()))
@@ -278,57 +214,4 @@ USingularisItem* USingularisInventorySubsystem::CollectItem(AActor* FormActor) c
 		*GetNameSafe(Item->GetClass())
 	);
 	return Item;
-}
-
-const FSingularisItemRow* USingularisInventorySubsystem::FindItemRow(const USingularisItem* Item) const
-{
-	if (!IsValid(Item))
-		return nullptr;
-
-	return FindItemRowByClass(TSubclassOf<USingularisItem>(Item->GetClass()));
-}
-
-const FSingularisItemRow* USingularisInventorySubsystem::FindItemRowByClass(
-	const TSubclassOf<USingularisItem> ItemClass
-) const
-{
-	UDataTable* ItemTable = GetItemTable();
-	if (!IsValid(ItemTable) || !IsValid(ItemClass.Get()))
-		return nullptr; // 表无效时 GetItemTable 已记录日志；空入参不记
-
-	const UClass* ItemClassPtr = ItemClass.Get();
-	for (const auto& Pair : ItemTable->GetRowMap())
-	{
-		const auto Row = reinterpret_cast<const FSingularisItemRow*>(Pair.Value);
-		if (IsValid(Row->ItemClass) && Row->ItemClass.Get() == ItemClassPtr)
-			return Row;
-	}
-
-	UE_LOG(LogSingularisInventory, Warning, TEXT("物品类 %s 未在数据表中找到行，请检查物品数据配置"), *GetNameSafe(ItemClass.Get()));
-	return nullptr;
-}
-
-const FSingularisItemRow* USingularisInventorySubsystem::FindItemRowByFormActorClass(
-	const TSubclassOf<AActor> FormActorClass
-) const
-{
-	UDataTable* ItemTable = GetItemTable();
-	if (!IsValid(ItemTable) || !IsValid(FormActorClass.Get()))
-		return nullptr; // 表无效时 GetItemTable 已记录日志；空入参不记
-
-	const UClass* FormActorClassPtr = FormActorClass.Get();
-	for (const auto& Pair : ItemTable->GetRowMap())
-	{
-		const auto Row = reinterpret_cast<const FSingularisItemRow*>(Pair.Value);
-		if (IsValid(Row->FormActorClass) && Row->FormActorClass.Get() == FormActorClassPtr)
-			return Row;
-	}
-
-	UE_LOG(
-		LogSingularisInventory,
-		Warning,
-		TEXT("形态 Actor 类 %s 未在数据表中找到行，请检查物品数据配置"),
-		*GetNameSafe(FormActorClass.Get())
-	);
-	return nullptr;
 }

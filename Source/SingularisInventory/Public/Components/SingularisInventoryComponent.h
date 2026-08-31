@@ -82,14 +82,14 @@ public:
 	)
 	TObjectPtr<UInputAction> DropInputAction = nullptr;
 
-	/** 物品动作输入集：输入动作与动作标签配对，标签经物品动作映射路由。 */
+	/** 物品片段输入集：输入动作与片段标签配对，标签经物品片段映射路由。 */
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
 		Category = "SingularisInventory|引力奇点物库存|输入",
-		meta = (DisplayName = "物品动作输入")
+		meta = (DisplayName = "物品片段输入")
 	)
-	TArray<FSingularisItemActionInput> ItemActionInputs{};
+	TArray<FSingularisItemFragmentInput> FragmentInputs{};
 
 	/** 选中插槽输入动作数组，索引即插槽号（数字小键盘 1..N 映射到 0..N-1）。 */
 	UPROPERTY(
@@ -164,18 +164,18 @@ public:
 	void DropHeldItem();
 
 	/**
-	 * 触发手持物品的动作（客户端入口）。
-	 * 本地读所控口袋的选中物品 → 经 Server_TriggerItemAction RPC 上行服务端执行动作管线。
+	 * 触发手持物品的片段（客户端入口）。
+	 * 本地读所控口袋的选中物品 → 经 Server_TriggerFragment RPC 上行服务端执行片段管线。
 	 * 选中为本地行为，服务端不持有选中态，故触发须由客户端发起。
-	 * @param ActionTag 动作标签，路由到物品的动作映射
+	 * @param FragmentTag 片段标签，路由到物品的片段映射
 	 * @param InputValue 触发输入值
 	 */
 	UFUNCTION(
 		BlueprintCallable,
 		Category = "SingularisInventory|引力奇点物库存|API",
-		meta = (DisplayName = "触发物品动作")
+		meta = (DisplayName = "触发物品片段")
 	)
-	void TriggerItemAction(const FGameplayTag& ActionTag, const FInputActionValue& InputValue);
+	void TriggerFragment(const FGameplayTag& FragmentTag, const FInputActionValue& InputValue);
 
 #pragma endregion
 
@@ -186,9 +186,9 @@ private:
 	void Server_DropItem(USingularisItem* Item);
 
 	UFUNCTION(Server, Reliable)
-	void Server_TriggerItemAction(
+	void Server_TriggerFragment(
 		USingularisItem* Item,
-		const FGameplayTag& ActionTag,
+		const FGameplayTag& FragmentTag,
 		const FInputActionValue& InputValue
 	);
 
@@ -217,7 +217,7 @@ private:
 
 	void HandleSelectSlot(const FInputActionValue& Value, int32 SlotIndex);
 	void HandleDropInputAction(const FInputActionValue& Value);
-	void HandleItemActionInput(const FInputActionValue& Value, FGameplayTag ActionTag);
+	void HandleFragmentInput(const FInputActionValue& Value, FGameplayTag FragmentTag);
 
 	UFUNCTION()
 	void OnPossessPawnChanged(APawn* OldPawn, APawn* NewPawn) const;

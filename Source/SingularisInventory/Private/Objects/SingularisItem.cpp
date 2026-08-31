@@ -1,17 +1,29 @@
 ﻿#include "Objects/SingularisItem.h"
 
-#include <Engine/Engine.h>
+#include <Net/UnrealNetwork.h>
 #include <UObject/UObjectGlobals.h>
 
-USingularisItem* USingularisItem::MaterializeFromTemplate(UObject* Outer, const USingularisItem* Template)
+USingularisItem* USingularisItem::MaterializeFromDefinition(UObject* Outer, USingularisItemDefinition* Definition)
 {
-	// 1) 零信任校验：Outer 与模板必须有效
-	if (!IsValid(Outer) || !IsValid(Template))
+	// 1) 零信任校验：Outer 与定义必须有效
+	if (!IsValid(Outer) || !IsValid(Definition))
 		return nullptr;
 
-	// 2) 按模板类在新 Outer 下创建独立实例，复制模板属性使其脱离模板引用关系
-	USingularisItem* const Materialized = NewObject<USingularisItem>(Outer, Template->GetClass());
-	UEngine::CopyPropertiesForUnrelatedObjects(const_cast<USingularisItem*>(Template), Materialized);
+	// 2) 创建运行时实例并背引用定义
+	USingularisItem* const Materialized = NewObject<USingularisItem>(Outer);
+	Materialized->SetDefinition(Definition);
 
 	return Materialized;
+}
+
+void USingularisItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(USingularisItem, Definition);
+}
+
+void USingularisItem::SetDefinition(USingularisItemDefinition* InDefinition)
+{
+	Definition = InDefinition;
 }

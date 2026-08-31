@@ -2,9 +2,8 @@
 
 #include <CoreMinimal.h>
 #include <Engine/DeveloperSettings.h>
-#include <UObject/SoftObjectPath.h>
 
-#include "Templates/SubclassOf.h"
+#include "Objects/SingularisItemDefinition.h"
 #include "SingularisInventorySettings.generated.h"
 
 UCLASS(Config = SingularisInventory, DefaultConfig)
@@ -18,12 +17,9 @@ public:
 		EditDefaultsOnly,
 		BlueprintReadOnly,
 		Category = "SingularisInventory|引力奇点物库存|参数",
-		meta = (
-			DisplayName = "物品注册表",
-			RequiredAssetDataTags = "RowStructure=/Script/SingularisInventory.SingularisItemRow"
-		)
+		meta = (DisplayName = "物品定义注册表")
 	)
-	TSoftObjectPtr<UDataTable> ItemTable = nullptr;
+	TArray<TSoftObjectPtr<USingularisItemDefinition>> ItemDefinitions{};
 
 	USingularisInventorySettings();
 
