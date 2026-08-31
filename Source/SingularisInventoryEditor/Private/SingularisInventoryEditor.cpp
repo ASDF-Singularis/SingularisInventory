@@ -30,12 +30,12 @@ void FSingularisInventoryEditorModule::StartupModule()
 
 	RegisterAssetTypeAction(
 		AssetTools,
-		MakeShareable(new FAssetTypeActions_SingularisPocketWidget(SingularisPluginCategory))
+		MakeShareable(new FAssetTypeActions_SingularisItemFragment(SingularisPluginCategory))
 	);
 
 	RegisterAssetTypeAction(
 		AssetTools,
-		MakeShareable(new FAssetTypeActions_SingularisItemFragment(SingularisPluginCategory))
+		MakeShareable(new FAssetTypeActions_SingularisPocketWidget(SingularisPluginCategory))
 	);
 }
 

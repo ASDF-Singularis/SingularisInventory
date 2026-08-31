@@ -12,6 +12,7 @@ class SINGULARISINVENTORY_API USingularisInventorySettings : public UDeveloperSe
 	GENERATED_BODY()
 
 public:
+	/** 物品定义注册表，系统按此扫描并解析物品定义。 */
 	UPROPERTY(
 		Config,
 		EditDefaultsOnly,

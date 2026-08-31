@@ -52,7 +52,12 @@ public:
 
 #pragma endregion
 
+#pragma region UObject Interface
+
+	/** 声明需要复制的属性。 */
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+#pragma endregion
 
 private:
 #pragma region Internal Variable

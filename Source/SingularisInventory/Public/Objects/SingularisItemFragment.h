@@ -28,7 +28,7 @@ public:
 	UFUNCTION(
 		BlueprintNativeEvent,
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点物品片段|",
+		Category = "SingularisInventory|引力奇点物品片段|SPI",
 		meta = (DisplayName = "执行片段")
 	)
 	void Trigger(const FSingularisItemFragmentContext& Context);

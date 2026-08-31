@@ -27,6 +27,7 @@ public:
 	/** 主资产类型标识，AssetManager 按此类型发现物品定义。 */
 	static const FPrimaryAssetType ItemType;
 
+	/** 主资产 ID：类型 + 资产名。 */
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 
 #pragma region Parameter
