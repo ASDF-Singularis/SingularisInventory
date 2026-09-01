@@ -86,7 +86,7 @@ void USingularisItemFragmentComponent::Execute(
 			continue;
 
 		FragmentTags.Reset();
-		Fragment->GetFragmentTags(FragmentTags);
+		Fragment->GetOwnedGameplayTags(FragmentTags);
 		if (!FragmentTags.HasTag(FragmentTag))
 			continue;
 

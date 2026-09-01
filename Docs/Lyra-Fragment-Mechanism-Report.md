@@ -137,7 +137,7 @@ T* ULyraInventoryItemDefinition::FindFragmentByClass(TSubclassOf<ULyraInventoryI
 | --- | --- |
 | 1 | 删除 `FSingularisItemFragmentEntry` 与 `FSingularisItemFragmentPipeline` 包装 |
 | 2 | `USingularisItemDefinition` 改持平铺 `Instanced` 片段数组 |
-| 3 | `USingularisItemFragment` 增加 Tags 接口（`BlueprintNativeEvent`，片段自报 tags） |
+| 3 | `USingularisItemFragment` 实现 `IGameplayTagAssetInterface`（`GetOwnedGameplayTags` 自报 tags） |
 | 4 | `USingularisItemFragmentComponent::Execute` 改为"遍历片段 → tag 匹配 → `Trigger`" |
 
 ---
