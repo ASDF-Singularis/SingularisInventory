@@ -13,7 +13,7 @@ class AActor;
 /**
  * 引力奇点库存子系统。
  *
- * 全局查询与编排服务：初始化时经物品形态注册表与物品定义资产构建内存映射
+ * 全局查询与编排服务：初始化时经 AssetManager 扫描物品定义资产构建内存映射
  * （物品标签 -> 物品形态 / 物品标签 -> 物品定义，并推导物品定义 <-> 物品形态双向映射），
  * 提供按物品实例 / 物品标签 / 物品定义查询的易用 API，
  * 支持运行时动态注册 / 注销，并承担物品入世界 / 收容的世界生命周期原语。
@@ -116,7 +116,7 @@ public:
 	)
 	bool UnregisterItemForm(USingularisItemDefinition* Definition);
 
-	/** 重建注册表：重新载入物品形态注册表与物品定义资产映射。 */
+	/** 重建注册表：经 AssetManager 重新载入物品定义资产映射。 */
 	UFUNCTION(
 		BlueprintCallable,
 		Category = "SingularisInventory|引力奇点库存|API",

@@ -2,7 +2,6 @@
 
 #include <Components/PrimitiveComponent.h>
 #include <Engine/AssetManager.h>
-#include <Engine/DataTable.h>
 #include <Engine/EngineTypes.h>
 #include <Engine/GameInstance.h>
 #include <Engine/World.h>
@@ -10,9 +9,7 @@
 
 #include "SingularisInventory.h"
 #include "Components/SingularisItemComponent.h"
-#include "Configs/SingularisInventorySettings.h"
 #include "DataAssets/SingularisItemDefinition.h"
-#include "DataTables/SingularisItemFormRow.h"
 #include "Objects/SingularisItem.h"
 
 USingularisInventorySubsystem::USingularisInventorySubsystem() {}
@@ -26,7 +23,7 @@ void USingularisInventorySubsystem::Initialize(FSubsystemCollectionBase& Collect
 	UE_LOG(
 		LogSingularisInventory,
 		Display,
-		TEXT("[%s] Initialize：物品查询子系统初始化完成"),
+		TEXT("[%s] Initialize：库存子系统初始化完成"),
 		*GetNameSafe(this)
 	);
 }
@@ -36,7 +33,7 @@ void USingularisInventorySubsystem::Deinitialize()
 	UE_LOG(
 		LogSingularisInventory,
 		Display,
-		TEXT("[%s] Deinitialize：物品查询子系统卸载"),
+		TEXT("[%s] Deinitialize：库存子系统卸载"),
 		*GetNameSafe(this)
 	);
 
@@ -72,7 +69,7 @@ TSubclassOf<AActor> USingularisInventorySubsystem::FindFormActorClass(const FGam
 		UE_LOG(
 			LogSingularisInventory,
 			Warning,
-			TEXT("物品标签 %s 未在物品形态注册表中找到对应物品形态"),
+			TEXT("物品标签 %s 未映射到物品形态，请检查物品定义资产的形态配置"),
 			*ItemTag.ToString()
 		);
 		return nullptr;
@@ -98,7 +95,7 @@ TSubclassOf<AActor> USingularisInventorySubsystem::FindFormActorClassByDefinitio
 		UE_LOG(
 			LogSingularisInventory,
 			Warning,
-			TEXT("物品定义 %s 未映射到物品形态，请检查物品形态注册表"),
+			TEXT("物品定义 %s 未映射到物品形态，请检查定义资产与 AssetManager 扫描配置"),
 			*GetNameSafe(Definition)
 		);
 		return nullptr;
@@ -241,34 +238,7 @@ void USingularisInventorySubsystem::RebuildRegistry()
 	DefinitionToFormActorMap.Empty();
 	FormActorToDefinitionMap.Empty();
 
-	// 2) 从物品形态注册表构建 ItemTag -> FormActorClass 映射
-	const USingularisInventorySettings* Settings = GetDefault<USingularisInventorySettings>();
-	UDataTable* const FormTable = IsValid(Settings) ? Settings->ItemFormTable.LoadSynchronous() : nullptr;
-	if (!IsValid(FormTable))
-	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("物品形态注册表无效，请在项目设置中配置 ItemFormTable"));
-	}
-	else
-	{
-		for (const auto& Pair : FormTable->GetRowMap())
-		{
-			const auto Row = reinterpret_cast<const FSingularisItemFormRow*>(Pair.Value);
-			if (Row == nullptr || !Row->ItemTag.IsValid() || !IsValid(Row->FormActorClass))
-				continue;
-
-			TagToFormActorMap.Add(Row->ItemTag, Row->FormActorClass);
-		}
-
-		UE_LOG(
-			LogSingularisInventory,
-			Display,
-			TEXT("[%s] RebuildRegistry：物品形态注册表已载入 %d 条映射"),
-			*GetNameSafe(this),
-			TagToFormActorMap.Num()
-		);
-	}
-
-	// 3) 经 AssetManager 扫描物品定义资产，构建 ItemTag -> Definition 映射
+	// 2) 经 AssetManager 扫描物品定义资产，构建标签 / 形态映射（单一数据源）
 	UAssetManager& AssetManager = UAssetManager::Get();
 	TArray<FPrimaryAssetId> AssetIds;
 	AssetManager.GetPrimaryAssetIdList(USingularisItemDefinition::ItemType, AssetIds);
@@ -278,19 +248,24 @@ void USingularisInventorySubsystem::RebuildRegistry()
 	{
 		USingularisItemDefinition* const Definition =
 			AssetManager.GetPrimaryAssetObject<USingularisItemDefinition>(AssetId);
-		if (IsValid(Definition) && Definition->ItemTag.IsValid())
-			TagToDefinitionMap.Add(Definition->ItemTag, Definition);
+		if (!IsValid(Definition) || !Definition->ItemTag.IsValid())
+			continue;
+
+		TagToDefinitionMap.Add(Definition->ItemTag, Definition);
+		if (IsValid(Definition->FormActorClass))
+			TagToFormActorMap.Add(Definition->ItemTag, Definition->FormActorClass);
 	}
 
 	UE_LOG(
 		LogSingularisInventory,
 		Display,
-		TEXT("[%s] RebuildRegistry：物品定义映射已载入 %d 条"),
+		TEXT("[%s] RebuildRegistry：物品定义映射已载入 %d 条，物品形态映射 %d 条"),
 		*GetNameSafe(this),
-		TagToDefinitionMap.Num()
+		TagToDefinitionMap.Num(),
+		TagToFormActorMap.Num()
 	);
 
-	// 4) 经标签桥接推导 Definition <-> FormActorClass 双向映射
+	// 3) 经标签桥接推导 Definition <-> FormActorClass 双向映射
 	RebuildDefinitionFormMaps();
 
 	UE_LOG(

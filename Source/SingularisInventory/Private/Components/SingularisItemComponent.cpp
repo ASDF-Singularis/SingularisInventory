@@ -39,7 +39,7 @@ void USingularisItemComponent::BeginPlay()
 			GameInstance->GetSubsystem<USingularisInventorySubsystem>();
 		if (!IsValid(ItemSubsystem))
 		{
-			UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] BeginPlay：物品查询子系统无效"), *GetNameSafe(GetOwner()));
+			UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] BeginPlay：库存子系统无效"), *GetNameSafe(GetOwner()));
 			return;
 		}
 		USingularisItemDefinition* const Definition =

@@ -19,7 +19,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemReleasedSignature, USingulari
  * 引力奇点物品组件。
  *
  * 挂载于物品在世界中的形态 Actor，承载并强持有 USingularisItem 物品实例。
- * 无任何配置：物品形态与物品定义的映射由物品查询子系统自动化构建，
+ * 无任何配置：物品形态与物品定义的映射由库存子系统自动化构建，
  * 地图放置的形态 Actor 在 BeginPlay 阶段以自身类反查物品定义并物化绑定；
  * 运行时生成路径由生成方调用 BindItem 将物品实例移入。
  * 容器收容、离开 UWorld 等场景由调用方调用 TakeItem 取出物品实例后再销毁形态 Actor。
