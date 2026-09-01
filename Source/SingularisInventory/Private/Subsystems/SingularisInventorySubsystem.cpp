@@ -114,6 +114,30 @@ USingularisItemDefinition* USingularisInventorySubsystem::FindDefinitionByFormAc
 	return Definition != nullptr ? Definition->Get() : nullptr;
 }
 
+TSubclassOf<AActor> USingularisInventorySubsystem::FindFormActorClassByItem(USingularisItem* Item) const
+{
+	// 1) 零信任校验
+	if (!IsValid(Item))
+	{
+		UE_LOG(LogSingularisInventory, Warning, TEXT("物品实例无效，无法查询物品形态"));
+		return nullptr;
+	}
+
+	// 2) 经物品实例背引用的定义查物品形态
+	USingularisItemDefinition* const Definition = Item->GetDefinition();
+	if (!IsValid(Definition))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("物品实例 %s 无物品定义，无法查询物品形态"),
+			*GetNameSafe(Item)
+		);
+		return nullptr;
+	}
+	return FindFormActorClassByDefinition(Definition);
+}
+
 bool USingularisInventorySubsystem::RegisterItemForm(
 	USingularisItemDefinition* Definition,
 	const TSubclassOf<AActor> FormActorClass

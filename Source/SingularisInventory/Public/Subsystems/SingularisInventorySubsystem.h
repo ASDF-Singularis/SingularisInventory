@@ -92,6 +92,14 @@ public:
 	)
 	USingularisItemDefinition* FindDefinitionByFormActorClass(const TSubclassOf<AActor> FormActorClass) const;
 
+	/** 按物品实例查物品形态，未配置返回 nullptr。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点库存|API",
+		meta = (DisplayName = "按物品实例获取物品形态")
+	)
+	TSubclassOf<AActor> FindFormActorClassByItem(USingularisItem* Item) const;
+
 	/** 动态注册物品定义 -> 物品形态映射（替换旧关联，保证映射一致）。 */
 	UFUNCTION(
 		BlueprintCallable,
