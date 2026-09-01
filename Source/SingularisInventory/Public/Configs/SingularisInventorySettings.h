@@ -3,8 +3,9 @@
 #include <CoreMinimal.h>
 #include <Engine/DeveloperSettings.h>
 
-#include "Objects/SingularisItemDefinition.h"
 #include "SingularisInventorySettings.generated.h"
+
+class UDataTable;
 
 UCLASS(Config = SingularisInventory, DefaultConfig)
 class SINGULARISINVENTORY_API USingularisInventorySettings : public UDeveloperSettings
@@ -12,15 +13,18 @@ class SINGULARISINVENTORY_API USingularisInventorySettings : public UDeveloperSe
 	GENERATED_BODY()
 
 public:
-	/** 物品定义注册表，系统按此扫描并解析物品定义。 */
+	/** 物品形态注册表：以物品标签为行名，映射到形态 Actor 类。 */
 	UPROPERTY(
 		Config,
 		EditDefaultsOnly,
 		BlueprintReadOnly,
 		Category = "SingularisInventory|引力奇点物库存|参数",
-		meta = (DisplayName = "物品定义注册表")
+		meta = (
+			DisplayName = "物品形态注册表",
+			RequiredAssetDataTags = "RowStructure=/Script/SingularisInventory.SingularisItemFormRow"
+		)
 	)
-	TArray<TSoftObjectPtr<USingularisItemDefinition>> ItemDefinitions{};
+	TSoftObjectPtr<UDataTable> ItemFormTable = nullptr;
 
 	USingularisInventorySettings();
 

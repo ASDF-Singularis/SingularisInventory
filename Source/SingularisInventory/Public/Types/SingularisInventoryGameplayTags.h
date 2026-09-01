@@ -4,5 +4,7 @@
 #include <NativeGameplayTags.h>
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(SingularisInventory);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(SingularisInventory_Item);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(SingularisInventory_Item_Default);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(SingularisInventory_Fragment);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(SingularisInventory_Fragment_Default);

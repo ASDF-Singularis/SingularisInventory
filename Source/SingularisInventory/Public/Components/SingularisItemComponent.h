@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <CoreMinimal.h>
+#include <GameplayTagContainer.h>
 #include <Components/ActorComponent.h>
 
 #include "SingularisItemComponent.generated.h"
@@ -34,6 +35,22 @@ class SINGULARISINVENTORY_API USingularisItemComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+#pragma region Parameter
+
+	/**
+	 * 物品标签：形态 Actor 的唯一标识，经物品定义资产（AssetManager）映射到物品定义。
+	 * 仅设计期放置的形态 Actor 需要配置；运行时生成路径由生成方显式绑定物品。
+	 */
+	UPROPERTY(
+		EditDefaultsOnly,
+		BlueprintReadOnly,
+		Category = "SingularisInventory|引力奇点物品|参数",
+		meta = (DisplayName = "物品标签")
+	)
+	FGameplayTag ItemTag{};
+
+#pragma endregion
+
 #pragma region 事件分发器
 
 	UPROPERTY(

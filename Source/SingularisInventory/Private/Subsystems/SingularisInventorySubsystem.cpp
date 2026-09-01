@@ -1,6 +1,8 @@
 #include "Subsystems/SingularisInventorySubsystem.h"
 
 #include <Components/PrimitiveComponent.h>
+#include <Engine/AssetManager.h>
+#include <Engine/DataTable.h>
 #include <Engine/EngineTypes.h>
 #include <Engine/GameInstance.h>
 #include <Engine/World.h>
@@ -9,6 +11,7 @@
 #include "SingularisInventory.h"
 #include "Components/SingularisItemComponent.h"
 #include "Configs/SingularisInventorySettings.h"
+#include "DataTables/SingularisItemFormRow.h"
 #include "Objects/SingularisItem.h"
 #include "Objects/SingularisItemDefinition.h"
 
@@ -17,6 +20,8 @@ USingularisInventorySubsystem::USingularisInventorySubsystem() {}
 void USingularisInventorySubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+
+	RebuildRegistry();
 
 	UE_LOG(
 		LogSingularisInventory,
@@ -35,6 +40,10 @@ void USingularisInventorySubsystem::Deinitialize()
 		*GetNameSafe(this)
 	);
 
+	TagToFormActorMap.Empty();
+	FormActorToTagMap.Empty();
+	TagToDefinitionMap.Empty();
+
 	Super::Deinitialize();
 }
 
@@ -43,38 +52,178 @@ USingularisItemDefinition* USingularisInventorySubsystem::GetItemDefinition(USin
 	return IsValid(Item) ? Item->GetDefinition() : nullptr;
 }
 
-USingularisItemDefinition* USingularisInventorySubsystem::FindDefinitionByFormActorClass(
-	const TSubclassOf<AActor> FormActorClass
-) const
+USingularisItemDefinition* USingularisInventorySubsystem::FindDefinitionByItemTag(const FGameplayTag& ItemTag) const
 {
-	// 1) 零信任校验：形态 Actor 类必须有效
-	if (!IsValid(FormActorClass))
-		return nullptr;
-
-	const USingularisInventorySettings* Settings = GetDefault<USingularisInventorySettings>();
-	if (!IsValid(Settings))
+	const TObjectPtr<USingularisItemDefinition>* const Definition = TagToDefinitionMap.Find(ItemTag);
+	if (Definition == nullptr)
 	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("物品定义注册表设置无效"));
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("物品标签 %s 未映射到物品定义资产，请检查定义资产与 AssetManager 扫描配置"),
+			*ItemTag.ToString()
+		);
 		return nullptr;
 	}
+	return Definition->Get();
+}
 
-	// 2) 扫描注册表匹配形态 Actor 类
-	const UClass* const FormActorClassPtr = FormActorClass.Get();
-	for (const TSoftObjectPtr<USingularisItemDefinition>& DefinitionRef : Settings->ItemDefinitions)
+TSubclassOf<AActor> USingularisInventorySubsystem::FindFormActorClass(const FGameplayTag& ItemTag) const
+{
+	const TSubclassOf<AActor>* const FormActorClass = TagToFormActorMap.Find(ItemTag);
+	if (FormActorClass == nullptr)
 	{
-		USingularisItemDefinition* const Definition = DefinitionRef.LoadSynchronous();
-		if (IsValid(Definition) && IsValid(Definition->FormActorClass) && Definition->FormActorClass.Get() ==
-			FormActorClassPtr)
-			return Definition;
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("物品标签 %s 未在物品形态注册表中找到形态 Actor 类"),
+			*ItemTag.ToString()
+		);
+		return nullptr;
+	}
+	return *FormActorClass;
+}
+
+FGameplayTag USingularisInventorySubsystem::FindItemTagByFormActorClass(const TSubclassOf<AActor> FormActorClass) const
+{
+	const FGameplayTag* const ItemTag = FormActorToTagMap.Find(FormActorClass);
+	return ItemTag != nullptr ? *ItemTag : FGameplayTag{};
+}
+
+bool USingularisInventorySubsystem::RegisterItemForm(
+	const FGameplayTag& ItemTag,
+	const TSubclassOf<AActor> FormActorClass
+)
+{
+	// 1) 零信任校验
+	if (!ItemTag.IsValid() || !IsValid(FormActorClass))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] RegisterItemForm：入参非法（标签 %s，形态 %s）"),
+			*GetNameSafe(this),
+			*ItemTag.ToString(),
+			*GetNameSafe(FormActorClass)
+		);
+		return false;
+	}
+
+	// 2) 幂等：同一对已注册则无副作用
+	if (const TSubclassOf<AActor>* const ExistingActor = TagToFormActorMap.Find(ItemTag))
+	{
+		if (*ExistingActor == FormActorClass)
+			return true;
+	}
+
+	// 3) 拆除旧关联，保证双向映射一致
+	if (const TSubclassOf<AActor>* const ExistingActor = TagToFormActorMap.Find(ItemTag))
+		FormActorToTagMap.Remove(*ExistingActor);
+	if (const FGameplayTag* const ExistingTag = FormActorToTagMap.Find(FormActorClass))
+		TagToFormActorMap.Remove(*ExistingTag);
+
+	// 4) 写入双向映射
+	TagToFormActorMap.Add(ItemTag, FormActorClass);
+	FormActorToTagMap.Add(FormActorClass, ItemTag);
+
+	UE_LOG(
+		LogSingularisInventory,
+		Display,
+		TEXT("[%s] RegisterItemForm：%s -> %s 注册成功"),
+		*GetNameSafe(this),
+		*ItemTag.ToString(),
+		*GetNameSafe(FormActorClass)
+	);
+	return true;
+}
+
+bool USingularisInventorySubsystem::UnregisterItemForm(const FGameplayTag& ItemTag)
+{
+	const TSubclassOf<AActor>* const ExistingActor = TagToFormActorMap.Find(ItemTag);
+	if (ExistingActor == nullptr)
+		return false;
+
+	FormActorToTagMap.Remove(*ExistingActor);
+	TagToFormActorMap.Remove(ItemTag);
+
+	UE_LOG(
+		LogSingularisInventory,
+		Display,
+		TEXT("[%s] UnregisterItemForm：%s 注销成功"),
+		*GetNameSafe(this),
+		*ItemTag.ToString()
+	);
+	return true;
+}
+
+void USingularisInventorySubsystem::RebuildRegistry()
+{
+	// 1) 清空旧映射，避免残留脏数据
+	TagToFormActorMap.Empty();
+	FormActorToTagMap.Empty();
+	TagToDefinitionMap.Empty();
+
+	// 2) 从物品形态注册表构建 ItemTag <-> FormActorClass 双向映射
+	const USingularisInventorySettings* Settings = GetDefault<USingularisInventorySettings>();
+	UDataTable* const FormTable = IsValid(Settings) ? Settings->ItemFormTable.LoadSynchronous() : nullptr;
+	if (!IsValid(FormTable))
+	{
+		UE_LOG(LogSingularisInventory, Warning, TEXT("物品形态注册表无效，请在项目设置中配置 ItemFormTable"));
+	}
+	else
+	{
+		for (const auto& [RowName, RowPtr] : FormTable->GetRowMap())
+		{
+			const auto Row = reinterpret_cast<const FSingularisItemFormRow*>(RowPtr);
+			if (Row == nullptr || !IsValid(Row->FormActorClass))
+				continue;
+
+			const FGameplayTag ItemTag = FGameplayTag::RequestGameplayTag(RowName, false);
+			if (!ItemTag.IsValid())
+			{
+				UE_LOG(
+					LogSingularisInventory,
+					Warning,
+					TEXT("物品形态注册表：行名 %s 不是有效 GameplayTag，已跳过"),
+					*RowName.ToString()
+				);
+				continue;
+			}
+
+			TagToFormActorMap.Add(ItemTag, Row->FormActorClass);
+			FormActorToTagMap.Add(Row->FormActorClass, ItemTag);
+		}
+
+		UE_LOG(
+			LogSingularisInventory,
+			Display,
+			TEXT("[%s] RebuildRegistry：物品形态注册表已载入 %d 条映射"),
+			*GetNameSafe(this),
+			TagToFormActorMap.Num()
+		);
+	}
+
+	// 3) 经 AssetManager 扫描物品定义资产，构建 ItemTag -> Definition 映射
+	UAssetManager& AssetManager = UAssetManager::Get();
+	TArray<FPrimaryAssetId> AssetIds;
+	AssetManager.GetPrimaryAssetIdList(USingularisItemDefinition::ItemType, AssetIds);
+	AssetManager.LoadPrimaryAssets(AssetIds);
+
+	for (const FPrimaryAssetId& AssetId : AssetIds)
+	{
+		USingularisItemDefinition* const Definition =
+			AssetManager.GetPrimaryAssetObject<USingularisItemDefinition>(AssetId);
+		if (IsValid(Definition) && Definition->ItemTag.IsValid())
+			TagToDefinitionMap.Add(Definition->ItemTag, Definition);
 	}
 
 	UE_LOG(
 		LogSingularisInventory,
-		Warning,
-		TEXT("形态 Actor 类 %s 未在物品定义注册表中找到，请检查物品定义配置"),
-		*GetNameSafe(FormActorClassPtr)
+		Display,
+		TEXT("[%s] RebuildRegistry：物品定义映射已载入 %d 条"),
+		*GetNameSafe(this),
+		TagToDefinitionMap.Num()
 	);
-	return nullptr;
 }
 
 AActor* USingularisInventorySubsystem::SpawnItemInWorld(USingularisItem* Item, const FTransform& Transform) const
@@ -94,15 +243,26 @@ AActor* USingularisInventorySubsystem::SpawnItemInWorld(USingularisItem* Item, c
 		return nullptr;
 	}
 
-	// 3) 经物品实例背引用的定义查形态 Actor 类
+	// 3) 经物品实例背引用的定义取物品标签，再经形态表查形态 Actor 类
 	USingularisItemDefinition* const Definition = GetItemDefinition(Item);
-	const TSubclassOf<AActor> FormActorClass = IsValid(Definition) ? Definition->FormActorClass : nullptr;
+	if (!IsValid(Definition))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] SpawnItemInWorld：物品 %s 无物品定义"),
+			*GetNameSafe(this),
+			*GetNameSafe(Item)
+		);
+		return nullptr;
+	}
+	const TSubclassOf<AActor> FormActorClass = FindFormActorClass(Definition->ItemTag);
 	if (!IsValid(FormActorClass))
 	{
 		UE_LOG(
 			LogSingularisInventory,
 			Warning,
-			TEXT("[%s] SpawnItemInWorld：物品 %s 未配置形态 Actor 类"),
+			TEXT("[%s] SpawnItemInWorld：物品 %s 未在形态表中配置形态 Actor 类"),
 			*GetNameSafe(this),
 			*GetNameSafe(Item)
 		);

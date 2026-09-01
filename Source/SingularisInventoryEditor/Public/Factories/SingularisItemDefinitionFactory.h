@@ -1,7 +1,7 @@
 #pragma once
 
 #include <CoreMinimal.h>
-#include <AssetTypeActions/AssetTypeActions_Base.h>
+#include <AssetTypeActions_Base.h>
 #include <Factories/Factory.h>
 
 #include "SingularisItemDefinitionFactory.generated.h"

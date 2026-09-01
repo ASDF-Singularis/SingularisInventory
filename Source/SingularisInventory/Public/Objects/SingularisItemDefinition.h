@@ -9,7 +9,6 @@
 #include "SingularisItemDefinition.generated.h"
 
 class UTexture2D;
-class AActor;
 
 /**
  * 引力奇点物品定义。
@@ -31,6 +30,22 @@ public:
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 
 #pragma region Parameter
+
+	/**
+	 * 物品标签：物品的唯一标识，作为与形态 Actor 映射的桥梁。
+	 * 形态 Actor 类经物品形态注册表（ItemFormTable）按此标签查得。
+	 */
+	UPROPERTY(
+		EditDefaultsOnly,
+		BlueprintReadOnly,
+		Category = "SingularisInventory|引力奇点物品定义|参数",
+		meta = (
+			DisplayName = "物品标签",
+			Categories = "Singularis.Inventory.Item",
+			ForceSelection = "true"
+		)
+	)
+	FGameplayTag ItemTag{};
 
 	UPROPERTY(
 		EditDefaultsOnly,
@@ -55,14 +70,6 @@ public:
 		meta = (DisplayName = "图标")
 	)
 	TObjectPtr<UTexture2D> Icon = nullptr;
-
-	UPROPERTY(
-		EditDefaultsOnly,
-		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物品定义|参数",
-		meta = (DisplayName = "形态Actor类")
-	)
-	TSubclassOf<AActor> FormActorClass = nullptr;
 
 	/**
 	 * 片段管线映射：按片段标签匹配到有序片段管线。
