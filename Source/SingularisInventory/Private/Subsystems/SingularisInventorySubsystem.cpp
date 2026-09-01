@@ -172,26 +172,14 @@ void USingularisInventorySubsystem::RebuildRegistry()
 	}
 	else
 	{
-		for (const auto& [RowName, RowPtr] : FormTable->GetRowMap())
+		for (const auto& Pair : FormTable->GetRowMap())
 		{
-			const auto Row = reinterpret_cast<const FSingularisItemFormRow*>(RowPtr);
-			if (Row == nullptr || !IsValid(Row->FormActorClass))
+			const auto Row = reinterpret_cast<const FSingularisItemFormRow*>(Pair.Value);
+			if (Row == nullptr || !Row->ItemTag.IsValid() || !IsValid(Row->FormActorClass))
 				continue;
 
-			const FGameplayTag ItemTag = FGameplayTag::RequestGameplayTag(RowName, false);
-			if (!ItemTag.IsValid())
-			{
-				UE_LOG(
-					LogSingularisInventory,
-					Warning,
-					TEXT("物品形态注册表：行名 %s 不是有效 GameplayTag，已跳过"),
-					*RowName.ToString()
-				);
-				continue;
-			}
-
-			TagToFormActorMap.Add(ItemTag, Row->FormActorClass);
-			FormActorToTagMap.Add(Row->FormActorClass, ItemTag);
+			TagToFormActorMap.Add(Row->ItemTag, Row->FormActorClass);
+			FormActorToTagMap.Add(Row->FormActorClass, Row->ItemTag);
 		}
 
 		UE_LOG(
@@ -244,7 +232,7 @@ AActor* USingularisInventorySubsystem::SpawnItemInWorld(USingularisItem* Item, c
 	}
 
 	// 3) 经物品实例背引用的定义取物品标签，再经形态表查形态 Actor 类
-	USingularisItemDefinition* const Definition = GetItemDefinition(Item);
+	const USingularisItemDefinition* const Definition = GetItemDefinition(Item);
 	if (!IsValid(Definition))
 	{
 		UE_LOG(

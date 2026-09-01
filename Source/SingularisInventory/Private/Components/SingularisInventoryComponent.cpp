@@ -401,7 +401,7 @@ void USingularisInventoryComponent::Server_TriggerFragment_Implementation(
 	}
 
 	// 2) 校验物品仍在所控口袋中，防御越权调用 / 已移除物品
-	USingularisPocketComponent* Pocket = GetPocketComponent();
+	const USingularisPocketComponent* Pocket = GetPocketComponent();
 	auto bInPocket = false;
 	if (IsValid(Pocket))
 	{

@@ -13,8 +13,10 @@
  * 每件进入世界 / 容器的物品都是一个运行时实例：背引用其物品定义
  * （USingularisItemDefinition）查询静态配置与片段管线。
  * 实例经 USingularisItemComponent / USingularisPocketComponent 注册为网络复制子对象。
+ *
+ * 默认物化为本基类；如需扩展运行时状态，可在项目设置配置一个全局子类作为物品实例类。
  */
-UCLASS(BlueprintType)
+UCLASS(Abstract, BlueprintType)
 class SINGULARISINVENTORY_API USingularisItem : public UObject
 {
 	GENERATED_BODY()

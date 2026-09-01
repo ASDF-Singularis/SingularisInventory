@@ -3,6 +3,7 @@
 #include <AssetToolsModule.h>
 
 #include "Factories/SingularisItemDefinitionFactory.h"
+#include "Factories/SingularisItemFactory.h"
 #include "Factories/SingularisItemFormActorFactory.h"
 #include "Factories/SingularisItemFragmentFactory.h"
 #include "Factories/SingularisPocketWidgetFactory.h"
@@ -21,6 +22,11 @@ void FSingularisInventoryEditorModule::StartupModule()
 	RegisterAssetTypeAction(
 		AssetTools,
 		MakeShareable(new FAssetTypeActions_SingularisItemDefinition(SingularisPluginCategory))
+	);
+
+	RegisterAssetTypeAction(
+		AssetTools,
+		MakeShareable(new FAssetTypeActions_SingularisItem(SingularisPluginCategory))
 	);
 
 	RegisterAssetTypeAction(

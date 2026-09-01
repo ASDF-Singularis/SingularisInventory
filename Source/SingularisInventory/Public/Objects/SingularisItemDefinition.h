@@ -17,7 +17,7 @@ class UTexture2D;
  * 形态 Actor 映射与片段管线映射（FSingularisItemFragmentPipeline）。
  * 运行时实例 USingularisItem 由本定义物化而来，背引用本定义查询配置。
  */
-UCLASS(BlueprintType)
+UCLASS(Abstract, BlueprintType)
 class SINGULARISINVENTORY_API USingularisItemDefinition : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
