@@ -5,6 +5,15 @@
 
 #include "Configs/SingularisInventorySettings.h"
 
+USingularisItem::USingularisItem() {}
+
+void USingularisItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(USingularisItem, Definition);
+}
+
 USingularisItem* USingularisItem::MaterializeFromDefinition(UObject* Outer, USingularisItemDefinition* Definition)
 {
 	// 1) 零信任校验：Outer 与定义必须有效
@@ -24,13 +33,6 @@ USingularisItem* USingularisItem::MaterializeFromDefinition(UObject* Outer, USin
 	Materialized->SetDefinition(Definition);
 
 	return Materialized;
-}
-
-void USingularisItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(USingularisItem, Definition);
 }
 
 void USingularisItem::SetDefinition(USingularisItemDefinition* InDefinition)

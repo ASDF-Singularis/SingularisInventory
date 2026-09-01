@@ -21,7 +21,41 @@ class SINGULARISINVENTORY_API USingularisItem : public UObject
 {
 	GENERATED_BODY()
 
+private:
+#pragma region Internal Variable
+
+	/** 物品定义资产，复制到客户端使远端可查询配置。 */
+	UPROPERTY(Replicated)
+	TObjectPtr<USingularisItemDefinition> Definition = nullptr;
+
+#pragma endregion
+
 public:
+#pragma region Constructors
+
+	USingularisItem();
+
+#pragma endregion
+
+#pragma region UObject Interface
+
+	/** 声明需要复制的属性。 */
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+#pragma endregion
+
+#pragma region State
+
+	/** 物品定义（单一数据源）。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点物品|State",
+		meta = (DisplayName = "获取物品定义")
+	)
+	USingularisItemDefinition* GetDefinition() const { return Definition; }
+
+#pragma endregion
+
 #pragma region SPI
 
 	/**
@@ -42,34 +76,7 @@ public:
 
 #pragma endregion
 
-#pragma region State
-
-	/** 物品定义（单一数据源）。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点物品|State",
-		meta = (DisplayName = "获取物品定义")
-	)
-	USingularisItemDefinition* GetDefinition() const { return Definition; }
-
-#pragma endregion
-
-#pragma region UObject Interface
-
-	/** 声明需要复制的属性。 */
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-#pragma endregion
-
 private:
-#pragma region Internal Variable
-
-	/** 物品定义资产，复制到客户端使远端可查询配置。 */
-	UPROPERTY(Replicated)
-	TObjectPtr<USingularisItemDefinition> Definition = nullptr;
-
-#pragma endregion
-
 #pragma region Internal Function
 
 	/** 建立背引用定义。 */
