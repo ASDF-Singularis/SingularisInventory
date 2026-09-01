@@ -104,7 +104,7 @@ public:
 	)
 	TObjectPtr<UInputAction> DropInputAction = nullptr;
 
-	/** 物品片段输入集：输入动作与片段标签配对，标签经物品片段映射路由。 */
+	/** 物品片段输入集：输入动作与片段标签配对，标签路由到物品的片段。 */
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
@@ -187,9 +187,9 @@ public:
 
 	/**
 	 * 触发手持物品的片段（客户端入口）。
-	 * 本地读所控口袋的选中物品 → 经 Server_TriggerFragment RPC 上行服务端执行片段管线。
+	 * 本地读所控口袋的选中物品 → 经 Server_TriggerFragment RPC 上行服务端执行片段。
 	 * 选中为本地行为，服务端不持有选中态，故触发须由客户端发起。
-	 * @param FragmentTag 片段标签，路由到物品的片段映射
+	 * @param FragmentTag 片段标签，路由到物品的片段
 	 * @param InputValue 触发输入值
 	 */
 	UFUNCTION(

@@ -10,7 +10,6 @@
 #include "Objects/SingularisItemDefinition.h"
 #include "Objects/SingularisItemFragment.h"
 #include "Types/SingularisItemFragmentType.h"
-#include "Types/SingularisItemType.h"
 
 USingularisItemFragmentComponent::USingularisItemFragmentComponent()
 {
@@ -54,7 +53,7 @@ void USingularisItemFragmentComponent::Execute(
 		return;
 	}
 
-	// 2) 经物品实例背引用的定义取片段映射
+	// 2) 经物品实例背引用的定义取平铺片段数组
 	USingularisItemDefinition* const Definition = Item->GetDefinition();
 	if (!IsValid(Definition))
 	{
@@ -79,19 +78,18 @@ void USingularisItemFragmentComponent::Execute(
 		                    : nullptr;
 	Context.InputValue = InputValue;
 
-	// 4) 标签层级匹配命中管线，逐片段执行
-	for (const auto& [Tag, Pipeline] : Definition->FragmentMapping)
+	// 4) 遍历定义平铺片段数组，按片段自报标签层级匹配并逐片段执行
+	FGameplayTagContainer FragmentTags;
+	for (USingularisItemFragment* const Fragment : Definition->Fragments)
 	{
-		if (!Tag.MatchesTag(FragmentTag))
+		if (!IsValid(Fragment))
 			continue;
 
-		for (const FSingularisItemFragmentEntry& Entry : Pipeline.Fragments)
-		{
-			USingularisItemFragment* const Fragment = Entry.Fragment;
-			if (!IsValid(Fragment))
-				continue;
+		FragmentTags.Reset();
+		Fragment->GetOwnedGameplayTags(FragmentTags);
+		if (!FragmentTags.HasTag(FragmentTag))
+			continue;
 
-			Fragment->Trigger(Context);
-		}
+		Fragment->Trigger(Context);
 	}
 }

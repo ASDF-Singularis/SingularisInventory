@@ -357,7 +357,7 @@ void USingularisInventoryComponent::TriggerFragment(
 		return;
 	}
 
-	// 2) 读本地手持物品 → 经 RPC 上行服务端执行片段管线
+	// 2) 读本地手持物品 → 经 RPC 上行服务端执行片段
 	USingularisItem* const HeldItem = Pocket->GetSelectedItem();
 	if (!IsValid(HeldItem))
 	{
@@ -425,7 +425,7 @@ void USingularisInventoryComponent::Server_TriggerFragment_Implementation(
 		return;
 	}
 
-	// 3) 经片段组件执行片段管线
+	// 3) 经片段组件执行片段
 	USingularisItemFragmentComponent* FragmentComponent = nullptr;
 	const ACharacter* Character = GetControlledCharacter();
 	if (IsValid(Character))

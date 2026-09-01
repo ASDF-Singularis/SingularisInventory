@@ -6,6 +6,12 @@ public class SingularisInventory : ModuleRules
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
+		PublicDependencyModuleNames.AddRange(
+			[
+				"GameplayTags"
+			]
+		);
+
 		PrivateDependencyModuleNames.AddRange(
 			[
 				"Core",
@@ -26,9 +32,7 @@ public class SingularisInventory : ModuleRules
 				"EnhancedInput",
 
 				"EngineSettings",
-				"DeveloperSettings",
-
-				"GameplayTags"
+				"DeveloperSettings"
 			]
 		);
 	}
