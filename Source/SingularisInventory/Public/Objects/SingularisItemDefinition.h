@@ -5,16 +5,16 @@
 #include <Engine/DataAsset.h>
 #include <UObject/PrimaryAssetId.h>
 
-#include "Types/SingularisItemType.h"
 #include "SingularisItemDefinition.generated.h"
 
 class UTexture2D;
+class USingularisItemFragment;
 
 /**
  * 引力奇点物品定义。
  *
  * 单一数据源（SSOT）：每种物品一个定义资产，聚合物品的静态元数据、
- * 形态 Actor 映射与片段管线映射（FSingularisItemFragmentPipeline）。
+ * 形态 Actor 映射与平铺片段数组（USingularisItemFragment）。
  * 运行时实例 USingularisItem 由本定义物化而来，背引用本定义查询配置。
  */
 UCLASS(Abstract, BlueprintType)
@@ -72,20 +72,17 @@ public:
 	TObjectPtr<UTexture2D> Icon = nullptr;
 
 	/**
-	 * 片段管线映射：按片段标签匹配到有序片段管线。
-	 * 键为片段标签（支持层级匹配），值为有序执行的片段管线。
+	 * 物品片段：平铺组合的片段数组，数组顺序即执行顺序。
+	 * 每个片段经 Tags 接口自报响应标签，执行器按触发标签层级匹配后逐片段执行。
 	 */
 	UPROPERTY(
 		EditDefaultsOnly,
+		Instanced,
 		BlueprintReadOnly,
 		Category = "SingularisInventory|引力奇点物品定义|参数",
-		meta = (
-			DisplayName = "片段映射",
-			Categories = "Singularis.Inventory.Fragment",
-			ForceSelection = "true"
-		)
+		meta = (DisplayName = "物品片段")
 	)
-	TMap<FGameplayTag, FSingularisItemFragmentPipeline> FragmentMapping{};
+	TArray<TObjectPtr<USingularisItemFragment>> Fragments{};
 
 #pragma endregion
 };
