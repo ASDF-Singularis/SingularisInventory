@@ -18,7 +18,6 @@
 #include "Objects/SingularisItem.h"
 #include "Subsystems/SingularisInventorySubsystem.h"
 #include "Types/SingularisInventoryGameplayTags.h"
-#include "Types/SingularisItemType.h"
 
 USingularisInventoryComponent::USingularisInventoryComponent()
 {

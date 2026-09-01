@@ -5,7 +5,6 @@
 #include <InputActionValue.h>
 #include <Components/ActorComponent.h>
 
-#include "Types/SingularisItemType.h"
 #include "SingularisInventoryComponent.generated.h"
 
 class APlayerController;
@@ -16,6 +15,29 @@ class USingularisItem;
 class USingularisPocketComponent;
 class UInputMappingContext;
 class UInputAction;
+
+/**
+ * 引力奇点物品片段输入。
+ * 隶属本调度器（外部可整体替换 / 更名 / 移动），不属于片段域类型。
+ */
+USTRUCT(BlueprintType)
+struct SINGULARISINVENTORY_API FSingularisItemFragmentInput
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UInputAction> InputAction = nullptr;
+
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		meta = (
+			Categories = "Singularis.Inventory.Fragment",
+			ForceSelection = "true"
+		)
+	)
+	FGameplayTag FragmentTag{};
+};
 
 /**
  * 引力奇点物库存组件（调度器）。

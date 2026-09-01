@@ -1,34 +1,10 @@
 #pragma once
 
 #include <CoreMinimal.h>
-#include <GameplayTagContainer.h>
 
 #include "SingularisItemType.generated.h"
 
-class UInputAction;
 class USingularisItemFragment;
-
-/**
- * 引力奇点物品片段输入
- */
-USTRUCT(BlueprintType)
-struct SINGULARISINVENTORY_API FSingularisItemFragmentInput
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TObjectPtr<UInputAction> InputAction = nullptr;
-
-	UPROPERTY(
-		EditAnywhere,
-		BlueprintReadWrite,
-		meta = (
-			Categories = "Singularis.Inventory.Fragment",
-			ForceSelection = "true"
-		)
-	)
-	FGameplayTag FragmentTag{};
-};
 
 /**
  * 引力奇点物品片段条目
