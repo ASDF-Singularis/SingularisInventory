@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include <CoreMinimal.h>
-#include <GameplayTagContainer.h>
 #include <Components/ActorComponent.h>
 
 #include "SingularisItemComponent.generated.h"
@@ -20,7 +19,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemReleasedSignature, USingulari
  * 引力奇点物品组件。
  *
  * 挂载于物品在世界中的形态 Actor，承载并强持有 USingularisItem 物品实例。
- * 地图放置的形态 Actor 在 BeginPlay 阶段以自身（Owner）类经物品查询子系统映射出物品类型并物化绑定；
+ * 无任何配置：物品形态与物品定义的映射由物品查询子系统自动化构建，
+ * 地图放置的形态 Actor 在 BeginPlay 阶段以自身类反查物品定义并物化绑定；
  * 运行时生成路径由生成方调用 BindItem 将物品实例移入。
  * 容器收容、离开 UWorld 等场景由调用方调用 TakeItem 取出物品实例后再销毁形态 Actor。
  */
@@ -35,22 +35,6 @@ class SINGULARISINVENTORY_API USingularisItemComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
-#pragma region Parameter
-
-	/**
-	 * 物品标签：形态 Actor 的唯一标识，经物品定义资产（AssetManager）映射到物品定义。
-	 * 仅设计期放置的形态 Actor 需要配置；运行时生成路径由生成方显式绑定物品。
-	 */
-	UPROPERTY(
-		EditDefaultsOnly,
-		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物品|参数",
-		meta = (DisplayName = "物品标签")
-	)
-	FGameplayTag ItemTag{};
-
-#pragma endregion
-
 #pragma region 事件分发器
 
 	UPROPERTY(

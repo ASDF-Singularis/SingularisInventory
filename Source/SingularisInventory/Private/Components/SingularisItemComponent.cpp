@@ -22,26 +22,13 @@ void USingularisItemComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 1) 设计期按 ItemTag 映射生成：仅权威端、编辑器加载的形态 Actor、尚未持有物品时执行
+	// 1) 设计期按自身类映射生成：仅权威端、编辑器加载的物品形态、尚未持有物品时执行
 	//    SpawnItemInWorld 路径由调用方显式 BindItem，本分支不应触发
 	if (GetOwner()->HasAuthority()
 		&& GetOwner()->HasAllFlags(RF_WasLoaded)
 		&& !HasItem())
 	{
-		// 2) 物品标签必须有效，否则无法映射到物品定义
-		if (!ItemTag.IsValid())
-		{
-			UE_LOG(
-				LogSingularisInventory,
-				Warning,
-				TEXT("[%s] BeginPlay：形态 Actor %s 未配置物品标签，无法生成"),
-				*GetNameSafe(GetOwner()),
-				*GetNameSafe(GetOwner()->GetClass())
-			);
-			return;
-		}
-
-		// 3) 经全局查询子系统按物品标签映射物品定义，单一数据源为物品定义资产
+		// 2) 经全局查询子系统按自身类反查物品定义，映射由子系统自动化构建
 		const UGameInstance* const GameInstance = GetWorld()->GetGameInstance();
 		if (!IsValid(GameInstance))
 		{
@@ -55,20 +42,21 @@ void USingularisItemComponent::BeginPlay()
 			UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] BeginPlay：物品查询子系统无效"), *GetNameSafe(GetOwner()));
 			return;
 		}
-		USingularisItemDefinition* const Definition = ItemSubsystem->FindDefinitionByItemTag(ItemTag);
+		USingularisItemDefinition* const Definition =
+			ItemSubsystem->FindDefinitionByFormActorClass(GetOwner()->GetClass());
 		if (!IsValid(Definition))
 		{
 			UE_LOG(
 				LogSingularisInventory,
 				Warning,
-				TEXT("[%s] BeginPlay：物品标签 %s 未映射到物品定义，无法生成"),
+				TEXT("[%s] BeginPlay：物品形态 %s 未映射到物品定义，无法生成"),
 				*GetNameSafe(GetOwner()),
-				*ItemTag.ToString()
+				*GetNameSafe(GetOwner()->GetClass())
 			);
 			return;
 		}
 
-		// 4) 按映射得到的定义物化独立运行时实例并绑定
+		// 3) 按映射得到的定义物化独立运行时实例并绑定
 		USingularisItem* const Materialized = USingularisItem::MaterializeFromDefinition(GetWorld(), Definition);
 		if (IsValid(Materialized))
 			BindItem(Materialized);
