@@ -21,7 +21,6 @@ class SINGULARISINVENTORY_API USingularisItem : public UObject
 {
 	GENERATED_BODY()
 
-private:
 #pragma region Internal Variable
 
 	/** 物品定义资产，复制到客户端使远端可查询配置。 */
@@ -64,7 +63,7 @@ public:
 	 * 物化实例的 Outer 设为调用方传入的 Outer（推荐 UWorld，使生命周期脱离形态 Actor / 组件），
 	 * 背引用定义查询静态配置与平铺片段数组。仅用于权威端 BeginPlay 阶段。
 	 * @param Outer 物化实例的外层；生命周期归属于此对象
-	 * @param Definition 物品定义资产
+	 * @param ItemDefinition 物品定义资产
 	 * @return 物化出的运行时实例；Outer 或定义无效返回 nullptr
 	 */
 	UFUNCTION(
@@ -72,7 +71,7 @@ public:
 		Category = "SingularisInventory|引力奇点物品|SPI",
 		meta = (DisplayName = "从定义物化实例")
 	)
-	static USingularisItem* MaterializeFromDefinition(UObject* Outer, USingularisItemDefinition* Definition);
+	static USingularisItem* MaterializeFromDefinition(UObject* Outer, USingularisItemDefinition* ItemDefinition);
 
 #pragma endregion
 
