@@ -22,11 +22,31 @@ class SINGULARISINVENTORY_API USingularisItemFragment : public UObject, public I
 	GENERATED_BODY()
 
 public:
+#pragma region Parameter
+
+	/**
+	 * 响应标签：本片段响应的触发标签集合（支持层级匹配）。
+	 * 作为 GetOwnedGameplayTags 默认实现的数据源，蓝图片段在此填数据即可。
+	 */
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadOnly,
+		Category = "SingularisInventory|引力奇点物品片段|参数",
+		meta = (
+			DisplayName = "响应标签",
+			Categories = "Singularis.Inventory.Fragment",
+			ForceSelection = "true"
+		)
+	)
+	FGameplayTagContainer FragmentTags{};
+
+#pragma endregion
+
 #pragma region GameplayTags Interface
 
 	/**
 	 * 片段响应标签：返回本片段响应的触发标签集合（支持层级匹配）。
-	 * 默认实现返回空容器；C++ 子类可覆写以声明或动态计算自身响应范围。
+	 * 默认实现返回 FragmentTags 数据源；C++ 子类可覆写以动态计算自身响应范围。
 	 * @param TagContainer 输出的响应标签集合
 	 */
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
