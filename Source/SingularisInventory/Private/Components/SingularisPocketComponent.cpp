@@ -4,6 +4,7 @@
 
 #include "SingularisInventory.h"
 #include "Objects/SingularisItem.h"
+#include "Objects/SingularisItemDefinition.h"
 
 USingularisPocketComponent::USingularisPocketComponent()
 {
@@ -26,14 +27,14 @@ void USingularisPocketComponent::BeginPlay()
 		InitializeSlots();
 		UE_LOG(LogSingularisInventory, Display, TEXT("[%s] 口袋插槽初始化完成，容量 %d"), *GetNameSafe(GetOwner()), Capacity);
 
-		// 2) 设计期模板物化：按索引对应插槽顺序，物化 InitialItems 中的模板实例
-		for (auto i = 0; i < InitialItems.Num() && i < Slots.Num(); ++i)
+		// 2) 设计期定义物化：按索引对应插槽顺序，物化 InitialDefinitions 中的定义资产
+		for (auto i = 0; i < InitialDefinitions.Num() && i < Slots.Num(); ++i)
 		{
-			USingularisItem* const Template = InitialItems[i];
-			if (!IsValid(Template))
+			USingularisItemDefinition* const Definition = InitialDefinitions[i];
+			if (!IsValid(Definition))
 				continue;
 
-			USingularisItem* const Materialized = USingularisItem::MaterializeFromTemplate(GetWorld(), Template);
+			USingularisItem* const Materialized = USingularisItem::MaterializeFromDefinition(GetWorld(), Definition);
 			if (!IsValid(Materialized))
 				continue;
 

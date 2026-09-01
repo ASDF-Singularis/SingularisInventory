@@ -20,7 +20,7 @@ UObject* USingularisItemFactory::FactoryCreateNew(
 )
 {
 	// 1) 利用 KismetEditorUtilities 自动生成蓝图资产
-	// 2) 强制将其基类指派为最新的物品基础类 USingularisItem
+	// 2) 强制将其基类指派为最新的物品实例基础类 USingularisItem
 	return FKismetEditorUtilities::CreateBlueprint(
 		USingularisItem::StaticClass(),
 		InParent,

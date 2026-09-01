@@ -1,21 +1,21 @@
 #pragma once
 
 #include <CoreMinimal.h>
-#include <AssetTypeActions/AssetTypeActions_Blueprint.h>
+#include <AssetTypeActions_Base.h>
 #include <Factories/Factory.h>
 
-#include "SingularisItemFactory.generated.h"
+#include "SingularisItemDefinitionFactory.generated.h"
 
 /**
- * 物品实例工厂类
+ * 物品定义工厂类
  */
 UCLASS()
-class SINGULARISINVENTORYEDITOR_API USingularisItemFactory : public UFactory
+class SINGULARISINVENTORYEDITOR_API USingularisItemDefinitionFactory : public UFactory
 {
 	GENERATED_BODY()
 
 public:
-	USingularisItemFactory();
+	USingularisItemDefinitionFactory();
 
 	virtual UObject* FactoryCreateNew(
 		UClass* InClass,
@@ -30,33 +30,26 @@ public:
 };
 
 /**
- * 物品实例资产类型操作 (定义编辑器右键菜单行为)
+ * 物品定义资产类型操作 (定义编辑器右键菜单行为)
  */
-class FAssetTypeActions_SingularisItem : public FAssetTypeActions_Blueprint
+class FAssetTypeActions_SingularisItemDefinition : public FAssetTypeActions_Base
 {
 public:
-	explicit FAssetTypeActions_SingularisItem(const EAssetTypeCategories::Type InAssetCategory)
+	explicit FAssetTypeActions_SingularisItemDefinition(const EAssetTypeCategories::Type InAssetCategory)
 		: AssetTypeCategory(InAssetCategory) {}
 
 	virtual FText GetName() const override
 	{
 		return NSLOCTEXT(
 			"SingularisInventoryEditor",
-			"AssetTypeActions_SingularisItem",
-			"Singularis Item"
+			"AssetTypeActions_SingularisItemDefinition",
+			"Singularis Item Definition"
 		);
 	}
 
 	virtual FColor GetTypeColor() const override { return FColor(255, 168, 46); }
 
 	virtual UClass* GetSupportedClass() const override;
-
-	virtual UFactory* GetFactoryForBlueprintType(UBlueprint* InBlueprint) const override
-	{
-		// 1) 动态实例化工厂对象以接管该资产蓝图的创建流程
-		USingularisItemFactory* Factory = NewObject<USingularisItemFactory>();
-		return Factory;
-	}
 
 	virtual uint32 GetCategories() override { return AssetTypeCategory; }
 

@@ -1,22 +1,21 @@
 #pragma once
 
 #include <CoreMinimal.h>
+#include <GameplayTagContainer.h>
 #include <Subsystems/GameInstanceSubsystem.h>
 
-#include "DataTables/SingularisItemRow.h"
 #include "SingularisInventorySubsystem.generated.h"
 
-class UDataTable;
 class USingularisItem;
-class USingularisPocketComponent;
-class UTexture2D;
+class USingularisItemDefinition;
 class AActor;
 
 /**
  * 引力奇点库存子系统。
  *
- * 全局查询服务：以 USingularisInventorySettings 配置的物品表为数据源，
- * 提供按物品实例 / 类查询静态数据与形态 Actor 类的易用 API。
+ * 全局查询与编排服务：初始化时经物品形态注册表与物品定义资产构建内存双向映射
+ * （ItemTag <-> FormActorClass），提供按物品实例 / 物品标签查询的易用 API，
+ * 支持运行时动态注册 / 注销，并承担物品入世界 / 收容的世界生命周期原语。
  * 蓝图经 GetGameInstanceSubsystem 节点可达。
  */
 UCLASS(NotBlueprintable, BlueprintType)
@@ -40,106 +39,66 @@ public:
 
 #pragma region API
 
-	/** 全局物品数据表。 */
+	/** 物品实例背引用的定义；实例无效返回 nullptr。 */
 	UFUNCTION(
 		BlueprintPure,
 		Category = "SingularisInventory|引力奇点库存|API",
-		meta = (DisplayName = "获取物品数据表")
+		meta = (DisplayName = "获取物品定义")
 	)
-	UDataTable* GetItemTable() const;
+	USingularisItemDefinition* GetItemDefinition(USingularisItem* Item) const;
 
-	/** 按物品实例查整行；找到返回 true 并输出行数据。 */
+	/** 按物品标签查物品定义，未配置返回 nullptr。 */
 	UFUNCTION(
 		BlueprintPure,
 		Category = "SingularisInventory|引力奇点库存|API",
-		meta = (DisplayName = "获取物品数据行")
+		meta = (DisplayName = "按物品标签获取物品定义")
 	)
-	bool TryGetItemRow(USingularisItem* Item, FSingularisItemRow& OutRow) const;
+	USingularisItemDefinition* FindDefinitionByItemTag(const FGameplayTag& ItemTag) const;
 
-	/** 按物品类查整行。 */
+	/** 按物品标签查形态 Actor 类，未配置返回 nullptr。 */
 	UFUNCTION(
 		BlueprintPure,
 		Category = "SingularisInventory|引力奇点库存|API",
-		meta = (DisplayName = "按类获取物品数据行")
+		meta = (DisplayName = "按物品标签获取形态Actor类")
 	)
-	bool TryGetItemRowByClass(TSubclassOf<USingularisItem> ItemClass, FSingularisItemRow& OutRow) const;
+	TSubclassOf<AActor> FindFormActorClass(const FGameplayTag& ItemTag) const;
 
-	/** 按形态 Actor 类查整行。 */
+	/** 按形态 Actor 类反查物品标签，未配置返回空标签。 */
 	UFUNCTION(
 		BlueprintPure,
 		Category = "SingularisInventory|引力奇点库存|API",
-		meta = (DisplayName = "按形态Actor类获取物品数据行")
+		meta = (DisplayName = "按形态Actor类获取物品标签")
 	)
-	bool TryGetItemRowByFormActorClass(TSubclassOf<AActor> FormActorClass, FSingularisItemRow& OutRow) const;
+	FGameplayTag FindItemTagByFormActorClass(const TSubclassOf<AActor> FormActorClass) const;
 
-	/** 按物品实例查形态 Actor 类，未配置返回 nullptr。 */
+	/** 动态注册物品标签 -> 形态 Actor 类映射（替换旧关联，保证双向一致）。 */
 	UFUNCTION(
-		BlueprintPure,
+		BlueprintCallable,
 		Category = "SingularisInventory|引力奇点库存|API",
-		meta = (DisplayName = "获取物品形态Actor类")
+		meta = (DisplayName = "注册物品形态")
 	)
-	TSubclassOf<AActor> GetFormActorClass(USingularisItem* Item) const;
+	bool RegisterItemForm(const FGameplayTag& ItemTag, const TSubclassOf<AActor> FormActorClass);
 
-	/** 按物品类查形态 Actor 类。 */
+	/** 动态注销物品标签 -> 形态 Actor 类映射。 */
 	UFUNCTION(
-		BlueprintPure,
+		BlueprintCallable,
 		Category = "SingularisInventory|引力奇点库存|API",
-		meta = (DisplayName = "按类获取物品形态Actor类")
+		meta = (DisplayName = "注销物品形态")
 	)
-	TSubclassOf<AActor> GetFormActorClassByClass(TSubclassOf<USingularisItem> ItemClass) const;
+	bool UnregisterItemForm(const FGameplayTag& ItemTag);
 
-	/** 按物品实例查图标，未配置返回 nullptr。 */
+	/** 重建注册表：重新载入物品形态注册表与物品定义资产映射。 */
 	UFUNCTION(
-		BlueprintPure,
+		BlueprintCallable,
 		Category = "SingularisInventory|引力奇点库存|API",
-		meta = (DisplayName = "获取物品图标")
+		meta = (DisplayName = "重建注册表")
 	)
-	UTexture2D* GetItemIcon(USingularisItem* Item) const;
-
-	/** 按物品类查图标。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|API",
-		meta = (DisplayName = "按类获取物品图标")
-	)
-	UTexture2D* GetItemIconByClass(TSubclassOf<USingularisItem> ItemClass) const;
-
-	/** 按物品实例查名称，未配置返回空文本。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|API",
-		meta = (DisplayName = "获取物品名称")
-	)
-	FText GetItemName(USingularisItem* Item) const;
-
-	/** 按物品类查名称。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|API",
-		meta = (DisplayName = "按类获取物品名称")
-	)
-	FText GetItemNameByClass(TSubclassOf<USingularisItem> ItemClass) const;
-
-	/** 按物品实例查描述，未配置返回空文本。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|API",
-		meta = (DisplayName = "获取物品描述")
-	)
-	FText GetItemDescription(USingularisItem* Item) const;
-
-	/** 按物品类查描述。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|API",
-		meta = (DisplayName = "按类获取物品描述")
-	)
-	FText GetItemDescriptionByClass(TSubclassOf<USingularisItem> ItemClass) const;
+	void RebuildRegistry();
 
 	/**
 	 * 生成物品入世界。
-	 * 经本子系统查物品形态 Actor 类 → SpawnActor 形态 Actor → 绑定 ItemComponent → 开启物理。
-	 * @return 形态 Actor；物品类未在表中、查表失败或生成失败返回 nullptr
+	 * 经物品实例背引用的定义取物品标签 → 查形态映射表取形态 Actor 类 → SpawnActor → 绑定 ItemComponent → 开启物理。
+	 * @return 形态 Actor；物品无定义、未配置形态 Actor 类、生成失败返回 nullptr
 	 */
 	UFUNCTION(
 		BlueprintCallable,
@@ -164,16 +123,20 @@ public:
 
 #pragma endregion
 
-#pragma region Internal Function
+private:
+#pragma region Internal Variable
 
-	/** 按物品实例查行指针，未找到返回 nullptr（C++ 核心）。 */
-	const FSingularisItemRow* FindItemRow(const USingularisItem* Item) const;
+	/** 物品标签 -> 形态 Actor 类（正向映射）。 */
+	UPROPERTY(Transient)
+	TMap<FGameplayTag, TSubclassOf<AActor>> TagToFormActorMap{};
 
-	/** 按物品类查行指针，未找到返回 nullptr（C++ 核心）。 */
-	const FSingularisItemRow* FindItemRowByClass(TSubclassOf<USingularisItem> ItemClass) const;
+	/** 形态 Actor 类 -> 物品标签（反向映射）。 */
+	UPROPERTY(Transient)
+	TMap<TSubclassOf<AActor>, FGameplayTag> FormActorToTagMap{};
 
-	/** 按形态 Actor 类查行指针，未找到返回 nullptr（C++ 核心）。 */
-	const FSingularisItemRow* FindItemRowByFormActorClass(TSubclassOf<AActor> FormActorClass) const;
+	/** 物品标签 -> 物品定义（初始化经 AssetManager 扫描构建，强引用保持加载）。 */
+	UPROPERTY(Transient)
+	TMap<FGameplayTag, TObjectPtr<USingularisItemDefinition>> TagToDefinitionMap{};
 
 #pragma endregion
 };

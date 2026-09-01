@@ -3,7 +3,7 @@
 #include <CoreMinimal.h>
 
 #include "InputActionValue.h"
-#include "SingularisItemActionType.generated.h"
+#include "SingularisItemFragmentType.generated.h"
 
 class AActor;
 class AController;
@@ -12,10 +12,10 @@ class USingularisItem;
 class USingularisInventoryComponent;
 
 /**
- * 引力奇点物品动作上下文
+ * 引力奇点物品片段上下文
  */
 USTRUCT(BlueprintType)
-struct SINGULARISINVENTORY_API FSingularisItemActionContext
+struct SINGULARISINVENTORY_API FSingularisItemFragmentContext
 {
 	GENERATED_BODY()
 
@@ -31,11 +31,11 @@ struct SINGULARISINVENTORY_API FSingularisItemActionContext
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	AActor* Avatar = nullptr;
 
-	/** 被执行动作的物品实例。 */
+	/** 被执行片段所作用的物品实例。 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USingularisItem* Item = nullptr;
 
-	/** 触发方所属的库存调度器，供动作消费 / 操作口袋。 */
+	/** 触发方所属的库存调度器，供片段消费 / 操作口袋。 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USingularisInventoryComponent* Inventory = nullptr;
 

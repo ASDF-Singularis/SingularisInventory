@@ -2,10 +2,11 @@
 
 #include <CoreMinimal.h>
 #include <Engine/DeveloperSettings.h>
-#include <UObject/SoftObjectPath.h>
 
-#include "Templates/SubclassOf.h"
 #include "SingularisInventorySettings.generated.h"
+
+class UDataTable;
+class USingularisItem;
 
 UCLASS(Config = SingularisInventory, DefaultConfig)
 class SINGULARISINVENTORY_API USingularisInventorySettings : public UDeveloperSettings
@@ -13,17 +14,28 @@ class SINGULARISINVENTORY_API USingularisInventorySettings : public UDeveloperSe
 	GENERATED_BODY()
 
 public:
+	/** 物品实例类：物化物品时使用的实例类；未配置回退 USingularisItem 基类。 */
+	UPROPERTY(
+		Config,
+		EditDefaultsOnly,
+		BlueprintReadOnly,
+		Category = "SingularisInventory|引力奇点物库存|参数",
+		meta = (DisplayName = "物品实例类")
+	)
+	TSubclassOf<USingularisItem> ItemClass = nullptr;
+
+	/** 物品形态注册表：以物品标签为行名，映射到形态 Actor 类。 */
 	UPROPERTY(
 		Config,
 		EditDefaultsOnly,
 		BlueprintReadOnly,
 		Category = "SingularisInventory|引力奇点物库存|参数",
 		meta = (
-			DisplayName = "物品注册表",
-			RequiredAssetDataTags = "RowStructure=/Script/SingularisInventory.SingularisItemRow"
+			DisplayName = "物品形态注册表",
+			RequiredAssetDataTags = "RowStructure=/Script/SingularisInventory.SingularisItemFormRow"
 		)
 	)
-	TSoftObjectPtr<UDataTable> ItemTable = nullptr;
+	TSoftObjectPtr<UDataTable> ItemFormTable = nullptr;
 
 	USingularisInventorySettings();
 

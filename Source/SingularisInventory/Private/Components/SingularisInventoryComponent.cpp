@@ -13,12 +13,11 @@
 #include <GameFramework/PlayerController.h>
 
 #include "SingularisInventory.h"
-#include "Components/SingularisItemActionComponent.h"
+#include "Components/SingularisItemFragmentComponent.h"
 #include "Components/SingularisPocketComponent.h"
 #include "Objects/SingularisItem.h"
 #include "Subsystems/SingularisInventorySubsystem.h"
 #include "Types/SingularisInventoryGameplayTags.h"
-#include "Types/SingularisItemType.h"
 
 USingularisInventoryComponent::USingularisInventoryComponent()
 {
@@ -47,7 +46,7 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 	static const ConstructorHelpers::FObjectFinder<UInputAction> FourthPocketActionFinder(
 		TEXT("/SingularisInventory/Inputs/Actions/IA_FourthPocket.IA_FourthPocket")
 	);
-	static const ConstructorHelpers::FObjectFinder<UInputAction> ItemActionFinder(
+	static const ConstructorHelpers::FObjectFinder<UInputAction> FragmentFinder(
 		TEXT("/SingularisInventory/Inputs/Actions/IA_ItemAction.IA_ItemAction")
 	);
 
@@ -111,13 +110,13 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 		TEXT("/SingularisInventory/Inputs/Actions/IA_FourthPocket")
 	);
 
-	if (ItemActionFinder.Succeeded())
-		ItemActionInputs.Add({ItemActionFinder.Object, SingularisInventory_ItemAction_Default});
+	if (FragmentFinder.Succeeded())
+		FragmentInputs.Add({FragmentFinder.Object, SingularisInventory_Fragment_Default});
 	else
 		UE_LOG(
 		LogSingularisInventory,
 		Error,
-		TEXT("默认物品动作输入加载失败：%s"),
+		TEXT("默认物品片段输入加载失败：%s"),
 		TEXT("/SingularisInventory/Inputs/Actions/IA_ItemAction")
 	);
 }
@@ -330,8 +329,8 @@ void USingularisInventoryComponent::Server_DropItem_Implementation(USingularisIt
 	DropItem(Item);
 }
 
-void USingularisInventoryComponent::TriggerItemAction(
-	const FGameplayTag& ActionTag,
+void USingularisInventoryComponent::TriggerFragment(
+	const FGameplayTag& FragmentTag,
 	const FInputActionValue& InputValue
 )
 {
@@ -341,7 +340,7 @@ void USingularisInventoryComponent::TriggerItemAction(
 		UE_LOG(
 			LogSingularisInventory,
 			Display,
-			TEXT("[%s] TriggerItemAction：非本地控制者，跳过"),
+			TEXT("[%s] TriggerFragment：非本地控制者，跳过"),
 			*GetNameSafe(GetOwner())
 		);
 		return;
@@ -352,56 +351,56 @@ void USingularisInventoryComponent::TriggerItemAction(
 		UE_LOG(
 			LogSingularisInventory,
 			Warning,
-			TEXT("[%s] TriggerItemAction：未找到口袋组件"),
+			TEXT("[%s] TriggerFragment：未找到口袋组件"),
 			*GetNameSafe(GetOwner())
 		);
 		return;
 	}
 
-	// 2) 读本地手持物品 → 经 RPC 上行服务端执行动作管线
+	// 2) 读本地手持物品 → 经 RPC 上行服务端执行片段管线
 	USingularisItem* const HeldItem = Pocket->GetSelectedItem();
 	if (!IsValid(HeldItem))
 	{
 		UE_LOG(
 			LogSingularisInventory,
 			Display,
-			TEXT("[%s] TriggerItemAction：无手持物品"),
+			TEXT("[%s] TriggerFragment：无手持物品"),
 			*GetNameSafe(GetOwner())
 		);
 		return;
 	}
-	Server_TriggerItemAction(HeldItem, ActionTag, InputValue);
+	Server_TriggerFragment(HeldItem, FragmentTag, InputValue);
 
 	UE_LOG(
 		LogSingularisInventory,
 		Display,
-		TEXT("[%s] TriggerItemAction：手持物品 %s(%s) 已请求触发"),
+		TEXT("[%s] TriggerFragment：手持物品 %s(%s) 已请求触发"),
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(HeldItem),
 		*GetNameSafe(HeldItem->GetClass())
 	);
 }
 
-void USingularisInventoryComponent::Server_TriggerItemAction_Implementation(
+void USingularisInventoryComponent::Server_TriggerFragment_Implementation(
 	USingularisItem* Item,
-	const FGameplayTag& ActionTag,
+	const FGameplayTag& FragmentTag,
 	const FInputActionValue& InputValue
 )
 {
-	// 1) 零信任校验：物品实例与动作标签必须有效
+	// 1) 零信任校验：物品实例与片段标签必须有效
 	if (!IsValid(Item))
 	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] Server_TriggerItemAction：物品实例无效"), *GetNameSafe(GetOwner()));
+		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] Server_TriggerFragment：物品实例无效"), *GetNameSafe(GetOwner()));
 		return;
 	}
-	if (!ActionTag.IsValid())
+	if (!FragmentTag.IsValid())
 	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] Server_TriggerItemAction：动作标签无效"), *GetNameSafe(GetOwner()));
+		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] Server_TriggerFragment：片段标签无效"), *GetNameSafe(GetOwner()));
 		return;
 	}
 
 	// 2) 校验物品仍在所控口袋中，防御越权调用 / 已移除物品
-	USingularisPocketComponent* Pocket = GetPocketComponent();
+	const USingularisPocketComponent* Pocket = GetPocketComponent();
 	auto bInPocket = false;
 	if (IsValid(Pocket))
 	{
@@ -419,29 +418,29 @@ void USingularisInventoryComponent::Server_TriggerItemAction_Implementation(
 		UE_LOG(
 			LogSingularisInventory,
 			Warning,
-			TEXT("[%s] Server_TriggerItemAction：物品 %s 不在所控口袋中"),
+			TEXT("[%s] Server_TriggerFragment：物品 %s 不在所控口袋中"),
 			*GetNameSafe(GetOwner()),
 			*GetNameSafe(Item)
 		);
 		return;
 	}
 
-	// 3) 经动作组件执行动作管线
-	USingularisItemActionComponent* ActionComponent = nullptr;
+	// 3) 经片段组件执行片段管线
+	USingularisItemFragmentComponent* FragmentComponent = nullptr;
 	const ACharacter* Character = GetControlledCharacter();
 	if (IsValid(Character))
-		ActionComponent = Character->FindComponentByClass<USingularisItemActionComponent>();
-	if (!IsValid(ActionComponent))
+		FragmentComponent = Character->FindComponentByClass<USingularisItemFragmentComponent>();
+	if (!IsValid(FragmentComponent))
 	{
 		UE_LOG(
 			LogSingularisInventory,
 			Warning,
-			TEXT("[%s] Server_TriggerItemAction：所控角色缺少物品动作组件"),
+			TEXT("[%s] Server_TriggerFragment：所控角色缺少物品片段组件"),
 			*GetNameSafe(GetOwner())
 		);
 		return;
 	}
-	ActionComponent->TryAction(Item, ActionTag, InputValue);
+	FragmentComponent->Execute(Item, FragmentTag, InputValue);
 }
 
 void USingularisInventoryComponent::BindInputAction()
@@ -496,29 +495,29 @@ void USingularisInventoryComponent::BindInputAction()
 		*GetNameSafe(GetOwner())
 	);
 
-	// 3) 物品动作：每个输入动作携带动作标签，触发即上行服务端执行
-	for (const FSingularisItemActionInput& ActionInput : ItemActionInputs)
+	// 3) 物品片段：每个输入动作携带片段标签，触发即上行服务端执行
+	for (const FSingularisItemFragmentInput& FragmentInput : FragmentInputs)
 	{
-		if (!IsValid(ActionInput.InputAction) || !ActionInput.ActionTag.IsValid())
+		if (!IsValid(FragmentInput.InputAction) || !FragmentInput.FragmentTag.IsValid())
 			continue;
 
 		EnhancedInputComponent->BindAction(
-			ActionInput.InputAction,
+			FragmentInput.InputAction,
 			ETriggerEvent::Started,
 			this,
-			&USingularisInventoryComponent::HandleItemActionInput,
-			ActionInput.ActionTag
+			&USingularisInventoryComponent::HandleFragmentInput,
+			FragmentInput.FragmentTag
 		);
 	}
 
 	UE_LOG(
 		LogSingularisInventory,
 		Display,
-		TEXT("[%s] BindInputAction：绑定完成（选中动作 %d 个，丢弃 %s，动作输入 %d 个）"),
+		TEXT("[%s] BindInputAction：绑定完成（选中动作 %d 个，丢弃 %s，片段输入 %d 个）"),
 		*GetNameSafe(GetOwner()),
 		SelectSlotActions.Num(),
 		IsValid(DropInputAction) ? TEXT("已绑定") : TEXT("未绑定"),
-		ItemActionInputs.Num()
+		FragmentInputs.Num()
 	);
 }
 
@@ -611,21 +610,21 @@ void USingularisInventoryComponent::HandleDropInputAction(const FInputActionValu
 	DropHeldItem();
 }
 
-void USingularisInventoryComponent::HandleItemActionInput(
+void USingularisInventoryComponent::HandleFragmentInput(
 	const FInputActionValue& Value,
-	const FGameplayTag ActionTag
+	const FGameplayTag FragmentTag
 )
 {
 	if (!OwnerPlayerController.IsValid() || !OwnerPlayerController->IsLocalController())
 		return;
-	if (!ActionTag.IsValid())
+	if (!FragmentTag.IsValid())
 	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] HandleItemActionInput：动作标签无效"), *GetNameSafe(GetOwner()));
+		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] HandleFragmentInput：片段标签无效"), *GetNameSafe(GetOwner()));
 		return;
 	}
 
-	// 触发手持物品动作：读本地手持 → RPC 上行服务端（逻辑封装于 TriggerItemAction）
-	TriggerItemAction(ActionTag, Value);
+	// 触发手持物品片段：读本地手持 → RPC 上行服务端（逻辑封装于 TriggerFragment）
+	TriggerFragment(FragmentTag, Value);
 }
 
 void USingularisInventoryComponent::OnPossessPawnChanged(APawn* OldPawn, APawn* NewPawn) const

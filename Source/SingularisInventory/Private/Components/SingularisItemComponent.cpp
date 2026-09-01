@@ -4,6 +4,7 @@
 
 #include "SingularisInventory.h"
 #include "Objects/SingularisItem.h"
+#include "Objects/SingularisItemDefinition.h"
 #include "Subsystems/SingularisInventorySubsystem.h"
 
 USingularisItemComponent::USingularisItemComponent()
@@ -21,13 +22,26 @@ void USingularisItemComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 1) 设计期按 Owner 类映射生成：仅权威端、编辑器加载的形态 Actor、尚未持有物品时执行
+	// 1) 设计期按 ItemTag 映射生成：仅权威端、编辑器加载的形态 Actor、尚未持有物品时执行
 	//    SpawnItemInWorld 路径由调用方显式 BindItem，本分支不应触发
 	if (GetOwner()->HasAuthority()
 		&& GetOwner()->HasAllFlags(RF_WasLoaded)
 		&& !HasItem())
 	{
-		// 2) 经全局查询子系统按 Owner（形态 Actor）类映射物品类型，单一数据源为物品表行
+		// 2) 物品标签必须有效，否则无法映射到物品定义
+		if (!ItemTag.IsValid())
+		{
+			UE_LOG(
+				LogSingularisInventory,
+				Warning,
+				TEXT("[%s] BeginPlay：形态 Actor %s 未配置物品标签，无法生成"),
+				*GetNameSafe(GetOwner()),
+				*GetNameSafe(GetOwner()->GetClass())
+			);
+			return;
+		}
+
+		// 3) 经全局查询子系统按物品标签映射物品定义，单一数据源为物品定义资产
 		const UGameInstance* const GameInstance = GetWorld()->GetGameInstance();
 		if (!IsValid(GameInstance))
 		{
@@ -41,26 +55,21 @@ void USingularisItemComponent::BeginPlay()
 			UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] BeginPlay：物品查询子系统无效"), *GetNameSafe(GetOwner()));
 			return;
 		}
-		const FSingularisItemRow* const Row = ItemSubsystem->FindItemRowByFormActorClass(
-			TSubclassOf<AActor>(GetOwner()->GetClass())
-		);
-		if (Row == nullptr || !IsValid(Row->ItemClass))
+		USingularisItemDefinition* const Definition = ItemSubsystem->FindDefinitionByItemTag(ItemTag);
+		if (!IsValid(Definition))
 		{
 			UE_LOG(
 				LogSingularisInventory,
 				Warning,
-				TEXT("[%s] BeginPlay：形态类 %s 未映射到有效物品类，无法生成"),
+				TEXT("[%s] BeginPlay：物品标签 %s 未映射到物品定义，无法生成"),
 				*GetNameSafe(GetOwner()),
-				*GetNameSafe(GetOwner()->GetClass())
+				*ItemTag.ToString()
 			);
 			return;
 		}
 
-		// 3) 按映射得到的物品类物化独立运行时实例并绑定
-		USingularisItem* const Materialized = USingularisItem::MaterializeFromTemplate(
-			GetWorld(),
-			Row->ItemClass.GetDefaultObject()
-		);
+		// 4) 按映射得到的定义物化独立运行时实例并绑定
+		USingularisItem* const Materialized = USingularisItem::MaterializeFromDefinition(GetWorld(), Definition);
 		if (IsValid(Materialized))
 			BindItem(Materialized);
 	}
