@@ -11,7 +11,7 @@
  * 引力奇点物品（运行时实例）。
  *
  * 每件进入世界 / 容器的物品都是一个运行时实例：背引用其物品定义
- * （USingularisItemDefinition）查询静态配置与片段管线。
+ * （USingularisItemDefinition）查询静态配置与平铺片段数组。
  * 实例经 USingularisItemComponent / USingularisPocketComponent 注册为网络复制子对象。
  *
  * 默认物化为本基类；如需扩展运行时状态，可在项目设置配置一个全局子类作为物品实例类。
@@ -28,7 +28,7 @@ public:
 	 * 从物品定义物化出一个独立的运行时实例。
 	 *
 	 * 物化实例的 Outer 设为调用方传入的 Outer（推荐 UWorld，使生命周期脱离形态 Actor / 组件），
-	 * 背引用定义查询静态配置与片段管线。仅用于权威端 BeginPlay 阶段。
+	 * 背引用定义查询静态配置与平铺片段数组。仅用于权威端 BeginPlay 阶段。
 	 * @param Outer 物化实例的外层；生命周期归属于此对象
 	 * @param Definition 物品定义资产
 	 * @return 物化出的运行时实例；Outer 或定义无效返回 nullptr

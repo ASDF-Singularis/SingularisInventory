@@ -79,12 +79,13 @@ void USingularisItemFragmentComponent::Execute(
 	Context.InputValue = InputValue;
 
 	// 4) 遍历定义平铺片段数组，按片段自报标签层级匹配并逐片段执行
+	FGameplayTagContainer FragmentTags;
 	for (USingularisItemFragment* const Fragment : Definition->Fragments)
 	{
 		if (!IsValid(Fragment))
 			continue;
 
-		FGameplayTagContainer FragmentTags;
+		FragmentTags.Reset();
 		Fragment->GetFragmentTags(FragmentTags);
 		if (!FragmentTags.HasTag(FragmentTag))
 			continue;
