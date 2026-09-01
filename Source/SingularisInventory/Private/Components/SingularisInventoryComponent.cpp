@@ -47,7 +47,7 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 		TEXT("/SingularisInventory/Inputs/Actions/IA_FourthPocket.IA_FourthPocket")
 	);
 	static const ConstructorHelpers::FObjectFinder<UInputAction> FragmentFinder(
-		TEXT("/SingularisInventory/Inputs/Actions/IA_ItemAction.IA_ItemAction")
+		TEXT("/SingularisInventory/Inputs/Actions/IA_Fragment.IA_Fragment")
 	);
 
 	if (InputMappingContextFinder.Succeeded())
@@ -117,7 +117,7 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 		LogSingularisInventory,
 		Error,
 		TEXT("默认物品片段输入加载失败：%s"),
-		TEXT("/SingularisInventory/Inputs/Actions/IA_ItemAction")
+		TEXT("/SingularisInventory/Inputs/Actions/IA_Fragment")
 	);
 }
 
