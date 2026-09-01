@@ -1,4 +1,4 @@
-#include "Objects/SingularisItemDefinition.h"
+#include "DataAssets/SingularisItemDefinition.h"
 
 const FPrimaryAssetType USingularisItemDefinition::ItemType = FPrimaryAssetType(TEXT("SingularisItem"));
 

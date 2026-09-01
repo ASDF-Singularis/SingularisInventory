@@ -23,6 +23,23 @@ class SINGULARISINVENTORY_API USingularisInventorySubsystem : public UGameInstan
 {
 	GENERATED_BODY()
 
+private:
+#pragma region Internal Variable
+
+	/** 物品标签 -> 形态 Actor 类（正向映射）。 */
+	UPROPERTY(Transient)
+	TMap<FGameplayTag, TSubclassOf<AActor>> TagToFormActorMap{};
+
+	/** 形态 Actor 类 -> 物品标签（反向映射）。 */
+	UPROPERTY(Transient)
+	TMap<TSubclassOf<AActor>, FGameplayTag> FormActorToTagMap{};
+
+	/** 物品标签 -> 物品定义（初始化经 AssetManager 扫描构建，强引用保持加载）。 */
+	UPROPERTY(Transient)
+	TMap<FGameplayTag, TObjectPtr<USingularisItemDefinition>> TagToDefinitionMap{};
+
+#pragma endregion
+
 public:
 #pragma region Constructors
 
@@ -38,14 +55,6 @@ public:
 #pragma endregion
 
 #pragma region API
-
-	/** 物品实例背引用的定义；实例无效返回 nullptr。 */
-	UFUNCTION(
-		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|API",
-		meta = (DisplayName = "获取物品定义")
-	)
-	USingularisItemDefinition* GetItemDefinition(USingularisItem* Item) const;
 
 	/** 按物品标签查物品定义，未配置返回 nullptr。 */
 	UFUNCTION(
@@ -120,23 +129,6 @@ public:
 		meta = (DisplayName = "收容物品出世界")
 	)
 	USingularisItem* CollectItem(AActor* FormActor) const;
-
-#pragma endregion
-
-private:
-#pragma region Internal Variable
-
-	/** 物品标签 -> 形态 Actor 类（正向映射）。 */
-	UPROPERTY(Transient)
-	TMap<FGameplayTag, TSubclassOf<AActor>> TagToFormActorMap{};
-
-	/** 形态 Actor 类 -> 物品标签（反向映射）。 */
-	UPROPERTY(Transient)
-	TMap<TSubclassOf<AActor>, FGameplayTag> FormActorToTagMap{};
-
-	/** 物品标签 -> 物品定义（初始化经 AssetManager 扫描构建，强引用保持加载）。 */
-	UPROPERTY(Transient)
-	TMap<FGameplayTag, TObjectPtr<USingularisItemDefinition>> TagToDefinitionMap{};
 
 #pragma endregion
 };

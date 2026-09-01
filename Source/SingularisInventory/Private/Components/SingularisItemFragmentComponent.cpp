@@ -6,8 +6,8 @@
 
 #include "SingularisInventory.h"
 #include "Components/SingularisInventoryComponent.h"
+#include "DataAssets/SingularisItemDefinition.h"
 #include "Objects/SingularisItem.h"
-#include "Objects/SingularisItemDefinition.h"
 #include "Objects/SingularisItemFragment.h"
 #include "Types/SingularisItemFragmentType.h"
 

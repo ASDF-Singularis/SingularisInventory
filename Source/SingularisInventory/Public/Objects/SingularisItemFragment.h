@@ -29,7 +29,7 @@ public:
 	 * 作为 GetOwnedGameplayTags 默认实现的数据源，蓝图片段在此填数据即可。
 	 */
 	UPROPERTY(
-		EditAnywhere,
+		EditDefaultsOnly,
 		BlueprintReadOnly,
 		Category = "SingularisInventory|引力奇点物品片段|参数",
 		meta = (

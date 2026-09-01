@@ -3,8 +3,8 @@
 #include <Net/UnrealNetwork.h>
 
 #include "SingularisInventory.h"
+#include "DataAssets/SingularisItemDefinition.h"
 #include "Objects/SingularisItem.h"
-#include "Objects/SingularisItemDefinition.h"
 
 USingularisPocketComponent::USingularisPocketComponent()
 {

@@ -4,7 +4,7 @@
 #include <UObject/CoreNetTypes.h>
 #include <UObject/Object.h>
 
-#include "Objects/SingularisItemDefinition.h"
+#include "DataAssets/SingularisItemDefinition.h"
 #include "SingularisItem.generated.h"
 
 /**

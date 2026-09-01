@@ -11,9 +11,9 @@
 #include "SingularisInventory.h"
 #include "Components/SingularisItemComponent.h"
 #include "Configs/SingularisInventorySettings.h"
+#include "DataAssets/SingularisItemDefinition.h"
 #include "DataTables/SingularisItemFormRow.h"
 #include "Objects/SingularisItem.h"
-#include "Objects/SingularisItemDefinition.h"
 
 USingularisInventorySubsystem::USingularisInventorySubsystem() {}
 
@@ -45,11 +45,6 @@ void USingularisInventorySubsystem::Deinitialize()
 	TagToDefinitionMap.Empty();
 
 	Super::Deinitialize();
-}
-
-USingularisItemDefinition* USingularisInventorySubsystem::GetItemDefinition(USingularisItem* Item) const
-{
-	return IsValid(Item) ? Item->GetDefinition() : nullptr;
 }
 
 USingularisItemDefinition* USingularisInventorySubsystem::FindDefinitionByItemTag(const FGameplayTag& ItemTag) const

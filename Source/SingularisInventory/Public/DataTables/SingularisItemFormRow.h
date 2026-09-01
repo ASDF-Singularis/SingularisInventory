@@ -32,6 +32,10 @@ struct FSingularisItemFormRow : public FTableRowBase
 	)
 	FGameplayTag ItemTag{};
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "形态Actor类"))
+	UPROPERTY(
+		EditAnywhere,
+		BlueprintReadWrite,
+		meta = (MustImplement = "/Script/SingularisInventory.SingularisItemFormActorInterface")
+	)
 	TSubclassOf<AActor> FormActorClass = nullptr;
 };

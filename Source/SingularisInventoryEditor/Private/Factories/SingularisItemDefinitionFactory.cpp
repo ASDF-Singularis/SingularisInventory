@@ -1,6 +1,6 @@
 #include "Factories/SingularisItemDefinitionFactory.h"
 
-#include <Objects/SingularisItemDefinition.h>
+#include <DataAssets/SingularisItemDefinition.h>
 
 USingularisItemDefinitionFactory::USingularisItemDefinitionFactory()
 {

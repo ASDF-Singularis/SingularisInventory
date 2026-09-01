@@ -17,7 +17,7 @@ class USingularisItemFragment;
  * 形态 Actor 映射与平铺片段数组（USingularisItemFragment）。
  * 运行时实例 USingularisItem 由本定义物化而来，背引用本定义查询配置。
  */
-UCLASS(Abstract, BlueprintType)
+UCLASS(BlueprintType)
 class SINGULARISINVENTORY_API USingularisItemDefinition : public UPrimaryDataAsset
 {
 	GENERATED_BODY()
