@@ -7,9 +7,9 @@ void USingularisItemFragment::PostInitProperties()
 	Super::PostInitProperties();
 
 #if WITH_EDITOR
-	
+
 	bIsCDO = HasAnyFlags(RF_ClassDefaultObject);
-	
+
 #endif
 }
 
@@ -37,5 +37,3 @@ void USingularisItemFragment::GetOwnedGameplayTags(FGameplayTagContainer& TagCon
 {
 	TagContainer = FragmentTags;
 }
-
-void USingularisItemFragment::Trigger_Implementation(const FSingularisItemFragmentContext& Context) {}

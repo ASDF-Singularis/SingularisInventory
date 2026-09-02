@@ -74,20 +74,4 @@ public:
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
 
 #pragma endregion
-
-#pragma region SPI
-
-	/**
-	 * 执行片段逻辑。
-	 * @param Context 片段上下文
-	 */
-	UFUNCTION(
-		BlueprintNativeEvent,
-		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点物品片段|SPI",
-		meta = (DisplayName = "执行片段")
-	)
-	void Trigger(const FSingularisItemFragmentContext& Context);
-
-#pragma endregion
 };
