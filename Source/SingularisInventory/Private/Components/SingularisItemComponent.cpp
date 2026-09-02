@@ -5,6 +5,7 @@
 #include "SingularisInventory.h"
 #include "DataAssets/SingularisItemDefinition.h"
 #include "Objects/SingularisItem.h"
+#include "Objects/SingularisItemFragment.h"
 #include "Subsystems/SingularisInventorySubsystem.h"
 
 USingularisItemComponent::USingularisItemComponent()
@@ -174,7 +175,16 @@ void USingularisItemComponent::RegisterItemSubObject()
 		return;
 
 	if (GetOwner()->HasAuthority())
+	{
 		AddReplicatedSubObject(Item.Get());
+
+		// 注册片段运行时副本为复制子对象
+		for (const TObjectPtr<USingularisItemFragment>& Fragment : Item->GetFragments())
+		{
+			if (IsValid(Fragment))
+				AddReplicatedSubObject(Fragment.Get());
+		}
+	}
 }
 
 void USingularisItemComponent::UnregisterItemSubObject()
@@ -183,5 +193,14 @@ void USingularisItemComponent::UnregisterItemSubObject()
 		return;
 
 	if (GetOwner()->HasAuthority())
+	{
 		RemoveReplicatedSubObject(Item.Get());
+
+		// 注销片段运行时副本
+		for (const TObjectPtr<USingularisItemFragment>& Fragment : Item->GetFragments())
+		{
+			if (IsValid(Fragment))
+				RemoveReplicatedSubObject(Fragment.Get());
+		}
+	}
 }

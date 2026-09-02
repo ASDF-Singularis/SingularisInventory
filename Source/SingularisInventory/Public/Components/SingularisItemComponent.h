@@ -129,10 +129,10 @@ public:
 private:
 #pragma region Internal Function
 
-	/** 将 Item 注册为网络复制子对象，仅在权威端执行。 */
+	/** 将 Item 及其片段注册为网络复制子对象，仅在权威端执行。 */
 	void RegisterItemSubObject();
 
-	/** 将 Item 从网络复制列表移除，仅在权威端执行。 */
+	/** 将 Item 及其片段从网络复制列表移除，仅在权威端执行。 */
 	void UnregisterItemSubObject();
 
 #pragma endregion

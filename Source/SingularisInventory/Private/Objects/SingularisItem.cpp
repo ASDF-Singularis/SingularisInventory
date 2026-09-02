@@ -12,18 +12,19 @@ void USingularisItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(USingularisItem, Definition);
+	DOREPLIFETIME(USingularisItem, Fragments);
 }
 
 USingularisItemFragment* USingularisItem::FindFragmentByClass(
 	const TSubclassOf<USingularisItemFragment> FragmentClass
 ) const
 {
-	// 1) 卫语句：定义与片段类必须有效
-	if (!IsValid(Definition) || !IsValid(FragmentClass))
+	// 1) 卫语句：片段类必须有效
+	if (!IsValid(FragmentClass))
 		return nullptr;
 
 	// 2) 线性扫描首个类型匹配片段
-	for (const TObjectPtr<USingularisItemFragment>& Fragment : Definition->Fragments)
+	for (const TObjectPtr<USingularisItemFragment>& Fragment : Fragments)
 	{
 		if (IsValid(Fragment) && Fragment->IsA(FragmentClass.Get()))
 			return Fragment;
@@ -41,14 +42,14 @@ USingularisItemFragment* USingularisItem::FindFragmentByTag(const FGameplayTag& 
 
 TArray<USingularisItemFragment*> USingularisItem::FindFragmentsByTag(const FGameplayTag& Tag) const
 {
-	// 1) 卫语句：定义与标签必须有效
-	if (!IsValid(Definition) || !Tag.IsValid())
+	// 1) 卫语句：标签必须有效
+	if (!Tag.IsValid())
 		return {};
 
 	TArray<USingularisItemFragment*> Matches;
 
 	// 2) 线性扫描全部响应标签匹配片段（层级匹配）
-	for (const TObjectPtr<USingularisItemFragment>& Fragment : Definition->Fragments)
+	for (const TObjectPtr<USingularisItemFragment>& Fragment : Fragments)
 	{
 		if (!IsValid(Fragment))
 			continue;
@@ -79,6 +80,7 @@ USingularisItem* USingularisItem::MaterializeFromDefinition(UObject* Outer, USin
 	// 3) 按实例类创建运行时实例并背引用定义
 	USingularisItem* const Materialized = NewObject<USingularisItem>(Outer, InstanceClass);
 	Materialized->SetDefinition(ItemDefinition);
+	Materialized->InstantiateFragments();
 
 	return Materialized;
 }
@@ -86,4 +88,29 @@ USingularisItem* USingularisItem::MaterializeFromDefinition(UObject* Outer, USin
 void USingularisItem::SetDefinition(USingularisItemDefinition* InDefinition)
 {
 	Definition = InDefinition;
+}
+
+void USingularisItem::InstantiateFragments()
+{
+	// 1) 卫语句：定义无效直接返回
+	if (!IsValid(Definition))
+		return;
+
+	Fragments.Reset();
+
+	// 2) 逐模板克隆为独立运行时副本，拷贝模板配置值作为初始状态
+	for (const TObjectPtr<USingularisItemFragment>& Template : Definition->Fragments)
+	{
+		if (!IsValid(Template))
+			continue;
+
+		USingularisItemFragment* const Fragment = NewObject<USingularisItemFragment>(
+			this,
+			Template->GetClass(),
+			NAME_None,
+			RF_NoFlags,
+			Template.Get()
+		);
+		Fragments.Add(Fragment);
+	}
 }

@@ -3,6 +3,7 @@
 #include <CoreMinimal.h>
 #include <GameplayTagAssetInterface.h>
 #include <GameplayTagContainer.h>
+#include <UObject/CoreNetTypes.h>
 #include <UObject/Object.h>
 
 #include "SingularisItemFragment.generated.h"
@@ -59,6 +60,12 @@ public:
 	virtual bool CanEditChange(const FProperty* InProperty) const override;
 
 #endif
+
+	/** 支持网络复制：片段作为物品实例的复制子对象同步到客户端。 */
+	virtual bool IsSupportedForNetworking() const override { return true; }
+
+	/** 声明需要复制的属性（基类无复制属性，供子类覆写扩展）。 */
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 #pragma endregion
 

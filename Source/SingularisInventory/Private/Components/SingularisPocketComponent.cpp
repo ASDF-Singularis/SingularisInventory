@@ -5,6 +5,7 @@
 #include "SingularisInventory.h"
 #include "DataAssets/SingularisItemDefinition.h"
 #include "Objects/SingularisItem.h"
+#include "Objects/SingularisItemFragment.h"
 
 USingularisPocketComponent::USingularisPocketComponent()
 {
@@ -459,7 +460,16 @@ void USingularisPocketComponent::RegisterSlotSubObject(const int32 SlotIndex)
 		return;
 
 	if (GetOwner()->HasAuthority())
+	{
 		AddReplicatedSubObject(Item);
+
+		// 注册片段运行时副本为复制子对象
+		for (const TObjectPtr<USingularisItemFragment>& Fragment : Item->GetFragments())
+		{
+			if (IsValid(Fragment))
+				AddReplicatedSubObject(Fragment.Get());
+		}
+	}
 }
 
 void USingularisPocketComponent::UnregisterSlotSubObject(const int32 SlotIndex)
@@ -472,7 +482,16 @@ void USingularisPocketComponent::UnregisterSlotSubObject(const int32 SlotIndex)
 		return;
 
 	if (GetOwner()->HasAuthority())
+	{
 		RemoveReplicatedSubObject(Item);
+
+		// 注销片段运行时副本
+		for (const TObjectPtr<USingularisItemFragment>& Fragment : Item->GetFragments())
+		{
+			if (IsValid(Fragment))
+				RemoveReplicatedSubObject(Fragment.Get());
+		}
+	}
 }
 
 void USingularisPocketComponent::UnregisterAllSubObjects()

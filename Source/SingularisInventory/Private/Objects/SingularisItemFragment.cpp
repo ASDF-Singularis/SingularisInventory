@@ -33,6 +33,11 @@ bool USingularisItemFragment::CanEditChange(const FProperty* InProperty) const
 
 #endif
 
+void USingularisItemFragment::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+}
+
 void USingularisItemFragment::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
 {
 	TagContainer = FragmentTags;

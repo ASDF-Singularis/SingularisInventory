@@ -13,7 +13,7 @@
  * 引力奇点物品（运行时实例）。
  *
  * 每件进入世界 / 容器的物品都是一个运行时实例：背引用其物品定义
- * （USingularisItemDefinition）查询静态配置与平铺片段数组。
+ * （USingularisItemDefinition）查询静态配置，并持有从定义模板克隆的独立片段副本。
  * 实例经 USingularisItemComponent / USingularisPocketComponent 注册为网络复制子对象。
  *
  * 默认物化为本基类；如需扩展运行时状态，可在项目设置配置一个全局子类作为物品实例类。
@@ -29,6 +29,10 @@ class SINGULARISINVENTORY_API USingularisItem : public UObject
 	UPROPERTY(Replicated)
 	TObjectPtr<USingularisItemDefinition> Definition = nullptr;
 
+	/** 物品片段运行时副本：物化时从定义模板克隆，每实例独立，复制到客户端同步运行时状态。 */
+	UPROPERTY(Replicated, Transient, DuplicateTransient)
+	TArray<TObjectPtr<USingularisItemFragment>> Fragments{};
+
 #pragma endregion
 
 public:
@@ -39,6 +43,9 @@ public:
 #pragma endregion
 
 #pragma region UObject Interface
+
+	/** 支持网络复制：物品实例作为复制子对象同步到客户端。 */
+	virtual bool IsSupportedForNetworking() const override { return true; }
 
 	/** 声明需要复制的属性。 */
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -54,6 +61,9 @@ public:
 		meta = (DisplayName = "获取物品定义")
 	)
 	USingularisItemDefinition* GetDefinition() const { return Definition; }
+
+	/** 物品片段运行时副本（每实例独立，供组件注册复制子对象）。 */
+	const TArray<TObjectPtr<USingularisItemFragment>>& GetFragments() const { return Fragments; }
 
 #pragma endregion
 
@@ -105,7 +115,7 @@ public:
 	 * 从物品定义物化出一个独立的运行时实例。
 	 *
 	 * 物化实例的 Outer 设为调用方传入的 Outer（推荐 UWorld，使生命周期脱离形态 Actor / 组件），
-	 * 背引用定义查询静态配置与平铺片段数组。仅用于权威端 BeginPlay 阶段。
+	 * 背引用定义查询静态配置，并从定义的片段模板克隆独立的运行时片段副本。仅用于权威端 BeginPlay 阶段。
 	 * @param Outer 物化实例的外层；生命周期归属于此对象
 	 * @param ItemDefinition 物品定义资产
 	 * @return 物化出的运行时实例；Outer 或定义无效返回 nullptr
@@ -124,6 +134,9 @@ private:
 
 	/** 建立背引用定义。 */
 	void SetDefinition(USingularisItemDefinition* InDefinition);
+
+	/** 从定义模板克隆片段为独立运行时副本。 */
+	void InstantiateFragments();
 
 #pragma endregion
 };
