@@ -9,7 +9,6 @@ class AActor;
 class AController;
 class APawn;
 class USingularisItem;
-class USingularisInventoryComponent;
 
 /**
  * 引力奇点物品片段上下文
@@ -34,10 +33,6 @@ struct SINGULARISINVENTORY_API FSingularisItemFragmentContext
 	/** 被执行片段所作用的物品实例。 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USingularisItem* Item = nullptr;
-
-	/** 触发方所属的库存调度器，供片段消费 / 操作口袋。 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	USingularisInventoryComponent* Inventory = nullptr;
 
 	/** 触发输入值。 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

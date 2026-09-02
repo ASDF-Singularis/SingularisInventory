@@ -21,7 +21,7 @@ class UInputAction;
  * 隶属本调度器（外部可整体替换 / 更名 / 移动），不属于片段域类型。
  */
 USTRUCT(BlueprintType)
-struct SINGULARISINVENTORY_API FSingularisItemFragmentInput
+struct SINGULARISINVENTORYGAMEPLAY_API FSingularisItemFragmentInput
 {
 	GENERATED_BODY()
 
@@ -55,7 +55,7 @@ UCLASS(
 	ClassGroup = ("Singularis"),
 	meta = (BlueprintSpawnableComponent, DisplayName = "引力奇点物库存组件")
 )
-class SINGULARISINVENTORY_API USingularisInventoryComponent : public UActorComponent
+class SINGULARISINVENTORYGAMEPLAY_API USingularisInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
 

@@ -5,7 +5,6 @@
 #include <GameFramework/Pawn.h>
 
 #include "SingularisInventory.h"
-#include "Components/SingularisInventoryComponent.h"
 #include "DataAssets/SingularisItemDefinition.h"
 #include "Objects/SingularisItem.h"
 #include "Objects/SingularisItemFragment.h"
@@ -73,9 +72,6 @@ void USingularisItemFragmentComponent::Execute(
 	Context.Instigator = Cast<APawn>(GetOwner());
 	Context.Avatar = GetOwner();
 	Context.Item = Item;
-	Context.Inventory = IsValid(Context.Controller)
-		                    ? Context.Controller->FindComponentByClass<USingularisInventoryComponent>()
-		                    : nullptr;
 	Context.InputValue = InputValue;
 
 	// 4) 遍历定义平铺片段数组，按片段自报标签层级匹配并逐片段执行

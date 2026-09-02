@@ -12,12 +12,11 @@
 #include <GameFramework/Pawn.h>
 #include <GameFramework/PlayerController.h>
 
-#include "SingularisInventory.h"
+#include "SingularisInventoryGameplay.h"
 #include "Components/SingularisItemFragmentComponent.h"
 #include "Components/SingularisPocketComponent.h"
 #include "Objects/SingularisItem.h"
 #include "Subsystems/SingularisInventorySubsystem.h"
-#include "Types/SingularisInventoryGameplayTags.h"
 
 USingularisInventoryComponent::USingularisInventoryComponent()
 {
@@ -46,15 +45,12 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 	static const ConstructorHelpers::FObjectFinder<UInputAction> FourthPocketActionFinder(
 		TEXT("/SingularisInventory/Inputs/Actions/IA_FourthPocket.IA_FourthPocket")
 	);
-	static const ConstructorHelpers::FObjectFinder<UInputAction> FragmentFinder(
-		TEXT("/SingularisInventory/Inputs/Actions/IA_Fragment.IA_Fragment")
-	);
 
 	if (InputMappingContextFinder.Succeeded())
 		InputMappingContext = InputMappingContextFinder.Object;
 	else
 		UE_LOG(
-		LogSingularisInventory,
+		LogSingularisInventoryGameplay,
 		Error,
 		TEXT("默认输入映射上下文加载失败：%s"),
 		TEXT("/SingularisInventory/Inputs/IMC_Singularis_Inventory")
@@ -64,7 +60,7 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 		DropInputAction = DropActionFinder.Object;
 	else
 		UE_LOG(
-		LogSingularisInventory,
+		LogSingularisInventoryGameplay,
 		Error,
 		TEXT("默认丢弃输入动作加载失败：%s"),
 		TEXT("/SingularisInventory/Inputs/Actions/IA_Drop")
@@ -74,7 +70,7 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 		SelectSlotActions.Add(FirstPocketActionFinder.Object);
 	else
 		UE_LOG(
-		LogSingularisInventory,
+		LogSingularisInventoryGameplay,
 		Error,
 		TEXT("默认插槽 0 输入动作加载失败：%s"),
 		TEXT("/SingularisInventory/Inputs/Actions/IA_FirstPocket")
@@ -84,7 +80,7 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 		SelectSlotActions.Add(SecondPocketActionFinder.Object);
 	else
 		UE_LOG(
-		LogSingularisInventory,
+		LogSingularisInventoryGameplay,
 		Error,
 		TEXT("默认插槽 1 输入动作加载失败：%s"),
 		TEXT("/SingularisInventory/Inputs/Actions/IA_SecondPocket")
@@ -94,7 +90,7 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 		SelectSlotActions.Add(ThirdPocketActionFinder.Object);
 	else
 		UE_LOG(
-		LogSingularisInventory,
+		LogSingularisInventoryGameplay,
 		Error,
 		TEXT("默认插槽 2 输入动作加载失败：%s"),
 		TEXT("/SingularisInventory/Inputs/Actions/IA_ThirdPocket")
@@ -104,20 +100,10 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 		SelectSlotActions.Add(FourthPocketActionFinder.Object);
 	else
 		UE_LOG(
-		LogSingularisInventory,
+		LogSingularisInventoryGameplay,
 		Error,
 		TEXT("默认插槽 3 输入动作加载失败：%s"),
 		TEXT("/SingularisInventory/Inputs/Actions/IA_FourthPocket")
-	);
-
-	if (FragmentFinder.Succeeded())
-		FragmentInputs.Add({FragmentFinder.Object, SingularisInventory_Fragment_Default});
-	else
-		UE_LOG(
-		LogSingularisInventory,
-		Error,
-		TEXT("默认物品片段输入加载失败：%s"),
-		TEXT("/SingularisInventory/Inputs/Actions/IA_Fragment")
 	);
 }
 
@@ -142,7 +128,7 @@ void USingularisInventoryComponent::BeginPlay()
 		RefreshInputMappingContext();
 
 		UE_LOG(
-			LogSingularisInventory,
+			LogSingularisInventoryGameplay,
 			Display,
 			TEXT("[%s] BeginPlay：本地控制器初始化完成"),
 			*GetNameSafe(GetOwner())
@@ -167,7 +153,7 @@ void USingularisInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayRe
 		}
 
 		UE_LOG(
-			LogSingularisInventory,
+			LogSingularisInventoryGameplay,
 			Display,
 			TEXT("[%s] EndPlay：输入绑定与映射上下文已清理"),
 			*GetNameSafe(GetOwner())
@@ -201,7 +187,7 @@ USingularisItem* USingularisInventoryComponent::PickupItem(AActor* FormActor)
 		if (bPlaced)
 		{
 			UE_LOG(
-				LogSingularisInventory,
+				LogSingularisInventoryGameplay,
 				Display,
 				TEXT("[%s] PickupItem：物品 %s(%s) 已路由入口袋"),
 				*GetNameSafe(GetOwner()),
@@ -214,7 +200,7 @@ USingularisItem* USingularisInventoryComponent::PickupItem(AActor* FormActor)
 
 	// 3) 未入容器：返回实例由调用方处置
 	UE_LOG(
-		LogSingularisInventory,
+		LogSingularisInventoryGameplay,
 		Display,
 		TEXT("[%s] PickupItem：物品 %s(%s) 未入口袋，交由调用方处置"),
 		*GetNameSafe(GetOwner()),
@@ -229,7 +215,7 @@ void USingularisInventoryComponent::DropItem(USingularisItem* Item)
 	// 1) 零信任校验：物品实例与所控 Character 必须有效
 	if (!IsValid(Item))
 	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] DropItem：物品实例无效"), *GetNameSafe(GetOwner()));
+		UE_LOG(LogSingularisInventoryGameplay, Warning, TEXT("[%s] DropItem：物品实例无效"), *GetNameSafe(GetOwner()));
 		return;
 	}
 	USingularisPocketComponent* Pocket = GetPocketComponent();
@@ -237,7 +223,7 @@ void USingularisInventoryComponent::DropItem(USingularisItem* Item)
 	if (!IsValid(Pocket) || !IsValid(Character))
 	{
 		UE_LOG(
-			LogSingularisInventory,
+			LogSingularisInventoryGameplay,
 			Warning,
 			TEXT("[%s] DropItem：口袋或所控 Character 无效（口袋：%s，Character：%s）"),
 			*GetNameSafe(GetOwner()),
@@ -251,7 +237,7 @@ void USingularisInventoryComponent::DropItem(USingularisItem* Item)
 	if (!Pocket->RemoveItem(Item))
 	{
 		UE_LOG(
-			LogSingularisInventory,
+			LogSingularisInventoryGameplay,
 			Warning,
 			TEXT("[%s] DropItem：物品 %s 不在口袋中，无法丢弃"),
 			*GetNameSafe(GetOwner()),
@@ -266,7 +252,7 @@ void USingularisInventoryComponent::DropItem(USingularisItem* Item)
 	InventorySubsystem->SpawnItemInWorld(Item, ComputeDropTransform(Character));
 
 	UE_LOG(
-		LogSingularisInventory,
+		LogSingularisInventoryGameplay,
 		Display,
 		TEXT("[%s] DropItem：物品 %s(%s) 已丢弃入世界"),
 		*GetNameSafe(GetOwner()),
@@ -281,7 +267,7 @@ void USingularisInventoryComponent::DropHeldItem()
 	if (!OwnerPlayerController.IsValid() || !OwnerPlayerController->IsLocalController())
 	{
 		UE_LOG(
-			LogSingularisInventory,
+			LogSingularisInventoryGameplay,
 			Display,
 			TEXT("[%s] DropHeldItem：非本地控制者，跳过"),
 			*GetNameSafe(GetOwner())
@@ -292,7 +278,7 @@ void USingularisInventoryComponent::DropHeldItem()
 	if (!IsValid(Pocket))
 	{
 		UE_LOG(
-			LogSingularisInventory,
+			LogSingularisInventoryGameplay,
 			Warning,
 			TEXT("[%s] DropHeldItem：未找到口袋组件"),
 			*GetNameSafe(GetOwner())
@@ -305,7 +291,7 @@ void USingularisInventoryComponent::DropHeldItem()
 	if (!IsValid(HeldItem))
 	{
 		UE_LOG(
-			LogSingularisInventory,
+			LogSingularisInventoryGameplay,
 			Display,
 			TEXT("[%s] DropHeldItem：无手持物品"),
 			*GetNameSafe(GetOwner())
@@ -315,7 +301,7 @@ void USingularisInventoryComponent::DropHeldItem()
 	Server_DropItem(HeldItem);
 
 	UE_LOG(
-		LogSingularisInventory,
+		LogSingularisInventoryGameplay,
 		Display,
 		TEXT("[%s] DropHeldItem：手持物品 %s(%s) 已请求丢弃"),
 		*GetNameSafe(GetOwner()),
@@ -338,7 +324,7 @@ void USingularisInventoryComponent::TriggerFragment(
 	if (!OwnerPlayerController.IsValid() || !OwnerPlayerController->IsLocalController())
 	{
 		UE_LOG(
-			LogSingularisInventory,
+			LogSingularisInventoryGameplay,
 			Display,
 			TEXT("[%s] TriggerFragment：非本地控制者，跳过"),
 			*GetNameSafe(GetOwner())
@@ -349,7 +335,7 @@ void USingularisInventoryComponent::TriggerFragment(
 	if (!IsValid(Pocket))
 	{
 		UE_LOG(
-			LogSingularisInventory,
+			LogSingularisInventoryGameplay,
 			Warning,
 			TEXT("[%s] TriggerFragment：未找到口袋组件"),
 			*GetNameSafe(GetOwner())
@@ -362,7 +348,7 @@ void USingularisInventoryComponent::TriggerFragment(
 	if (!IsValid(HeldItem))
 	{
 		UE_LOG(
-			LogSingularisInventory,
+			LogSingularisInventoryGameplay,
 			Display,
 			TEXT("[%s] TriggerFragment：无手持物品"),
 			*GetNameSafe(GetOwner())
@@ -372,7 +358,7 @@ void USingularisInventoryComponent::TriggerFragment(
 	Server_TriggerFragment(HeldItem, FragmentTag, InputValue);
 
 	UE_LOG(
-		LogSingularisInventory,
+		LogSingularisInventoryGameplay,
 		Display,
 		TEXT("[%s] TriggerFragment：手持物品 %s(%s) 已请求触发"),
 		*GetNameSafe(GetOwner()),
@@ -390,12 +376,22 @@ void USingularisInventoryComponent::Server_TriggerFragment_Implementation(
 	// 1) 零信任校验：物品实例与片段标签必须有效
 	if (!IsValid(Item))
 	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] Server_TriggerFragment：物品实例无效"), *GetNameSafe(GetOwner()));
+		UE_LOG(
+			LogSingularisInventoryGameplay,
+			Warning,
+			TEXT("[%s] Server_TriggerFragment：物品实例无效"),
+			*GetNameSafe(GetOwner())
+		);
 		return;
 	}
 	if (!FragmentTag.IsValid())
 	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] Server_TriggerFragment：片段标签无效"), *GetNameSafe(GetOwner()));
+		UE_LOG(
+			LogSingularisInventoryGameplay,
+			Warning,
+			TEXT("[%s] Server_TriggerFragment：片段标签无效"),
+			*GetNameSafe(GetOwner())
+		);
 		return;
 	}
 
@@ -416,7 +412,7 @@ void USingularisInventoryComponent::Server_TriggerFragment_Implementation(
 	if (!bInPocket)
 	{
 		UE_LOG(
-			LogSingularisInventory,
+			LogSingularisInventoryGameplay,
 			Warning,
 			TEXT("[%s] Server_TriggerFragment：物品 %s 不在所控口袋中"),
 			*GetNameSafe(GetOwner()),
@@ -433,7 +429,7 @@ void USingularisInventoryComponent::Server_TriggerFragment_Implementation(
 	if (!IsValid(FragmentComponent))
 	{
 		UE_LOG(
-			LogSingularisInventory,
+			LogSingularisInventoryGameplay,
 			Warning,
 			TEXT("[%s] Server_TriggerFragment：所控角色缺少物品片段组件"),
 			*GetNameSafe(GetOwner())
@@ -454,7 +450,7 @@ void USingularisInventoryComponent::BindInputAction()
 	if (!IsValid(EnhancedInputComponent))
 	{
 		UE_LOG(
-			LogSingularisInventory,
+			LogSingularisInventoryGameplay,
 			Warning,
 			TEXT("[%s] BindInputAction：EnhancedInputComponent 无效"),
 			*GetNameSafe(GetOwner())
@@ -489,7 +485,7 @@ void USingularisInventoryComponent::BindInputAction()
 	}
 	else
 		UE_LOG(
-		LogSingularisInventory,
+		LogSingularisInventoryGameplay,
 		Warning,
 		TEXT("[%s] BindInputAction：丢弃输入动作未配置，丢弃功能不可用"),
 		*GetNameSafe(GetOwner())
@@ -511,7 +507,7 @@ void USingularisInventoryComponent::BindInputAction()
 	}
 
 	UE_LOG(
-		LogSingularisInventory,
+		LogSingularisInventoryGameplay,
 		Display,
 		TEXT("[%s] BindInputAction：绑定完成（选中动作 %d 个，丢弃 %s，片段输入 %d 个）"),
 		*GetNameSafe(GetOwner()),
@@ -532,7 +528,7 @@ void USingularisInventoryComponent::RefreshInputMappingContext() const
 	if (!IsValid(Subsystem))
 	{
 		UE_LOG(
-			LogSingularisInventory,
+			LogSingularisInventoryGameplay,
 			Warning,
 			TEXT("[%s] RefreshInputMappingContext：EnhancedInput 本地玩家子系统无效"),
 			*GetNameSafe(GetOwner())
@@ -590,7 +586,7 @@ void USingularisInventoryComponent::HandleSelectSlot(const FInputActionValue& Va
 	if (!IsValid(Pocket))
 	{
 		UE_LOG(
-			LogSingularisInventory,
+			LogSingularisInventoryGameplay,
 			Warning,
 			TEXT("[%s] HandleSelectSlot：未找到口袋组件"),
 			*GetNameSafe(GetOwner())
@@ -619,7 +615,12 @@ void USingularisInventoryComponent::HandleFragmentInput(
 		return;
 	if (!FragmentTag.IsValid())
 	{
-		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] HandleFragmentInput：片段标签无效"), *GetNameSafe(GetOwner()));
+		UE_LOG(
+			LogSingularisInventoryGameplay,
+			Warning,
+			TEXT("[%s] HandleFragmentInput：片段标签无效"),
+			*GetNameSafe(GetOwner())
+		);
 		return;
 	}
 
