@@ -92,8 +92,8 @@ public:
 	 * 每个片段经 Tags 接口自报响应标签，执行器按触发标签层级匹配后逐片段执行。
 	 */
 	UPROPERTY(
-		EditDefaultsOnly,
 		Instanced,
+		EditDefaultsOnly,
 		BlueprintReadOnly,
 		Category = "SingularisInventory|引力奇点物品定义|参数",
 		meta = (DisplayName = "物品片段")

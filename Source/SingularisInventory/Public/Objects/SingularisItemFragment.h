@@ -35,10 +35,32 @@ public:
 		meta = (
 			DisplayName = "响应标签",
 			Categories = "Singularis.Inventory.Fragment",
-			ForceSelection = "true"
+			ForceSelection = "true",
+			EditCondition = "bIsCDO", // 绑定布尔变量
+			EditConditionHides // 当条件为 false 时，直接在面板隐藏
 		)
 	)
 	FGameplayTagContainer FragmentTags{};
+
+#pragma endregion
+
+private:
+#pragma region Internal Variable
+
+	UPROPERTY(Transient, DuplicateTransient, NonTransactional)
+	bool bIsCDO;
+
+#pragma endregion
+
+public:
+#pragma region Object Interface
+
+#if WITH_EDITOR
+
+	virtual void PostInitProperties() override;
+	virtual bool CanEditChange(const FProperty* InProperty) const override;
+
+#endif
 
 #pragma endregion
 
