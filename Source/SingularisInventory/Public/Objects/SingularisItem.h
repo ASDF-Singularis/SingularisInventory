@@ -54,16 +54,16 @@ public:
 		meta = (DisplayName = "获取物品定义")
 	)
 	USingularisItemDefinition* GetDefinition() const { return Definition; }
-	
-#pragma endregion 
-	
+
+#pragma endregion
+
 #pragma region API
 
 	/** 按片段类查询首个匹配片段。 */
 	UFUNCTION(
 		BlueprintPure,
 		Category = "SingularisInventory|引力奇点物品|API",
-		meta = (DisplayName = "按类查询片段")
+		meta = (DisplayName = "按类查询片段", DeterminesOutputType = "FragmentClass")
 	)
 	USingularisItemFragment* FindFragmentByClass(TSubclassOf<USingularisItemFragment> FragmentClass) const;
 
