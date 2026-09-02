@@ -14,6 +14,54 @@ void USingularisItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(USingularisItem, Definition);
 }
 
+USingularisItemFragment* USingularisItem::FindFragmentByClass(
+	const TSubclassOf<USingularisItemFragment> FragmentClass
+) const
+{
+	// 1) 卫语句：定义与片段类必须有效
+	if (!IsValid(Definition) || !IsValid(FragmentClass))
+		return nullptr;
+
+	// 2) 线性扫描首个类型匹配片段
+	for (const TObjectPtr<USingularisItemFragment>& Fragment : Definition->Fragments)
+	{
+		if (IsValid(Fragment) && Fragment->IsA(FragmentClass.Get()))
+			return Fragment;
+	}
+
+	return nullptr;
+}
+
+USingularisItemFragment* USingularisItem::FindFragmentByTag(const FGameplayTag& Tag) const
+{
+	// 复用全量查询取首元素，标签匹配逻辑保持单点
+	const TArray<USingularisItemFragment*> Matches = FindFragmentsByTag(Tag);
+	return Matches.IsEmpty() ? nullptr : Matches[0];
+}
+
+TArray<USingularisItemFragment*> USingularisItem::FindFragmentsByTag(const FGameplayTag& Tag) const
+{
+	// 1) 卫语句：定义与标签必须有效
+	if (!IsValid(Definition) || !Tag.IsValid())
+		return {};
+
+	TArray<USingularisItemFragment*> Matches;
+
+	// 2) 线性扫描全部响应标签匹配片段（层级匹配）
+	for (const TObjectPtr<USingularisItemFragment>& Fragment : Definition->Fragments)
+	{
+		if (!IsValid(Fragment))
+			continue;
+
+		FGameplayTagContainer OwnedTags;
+		Fragment->GetOwnedGameplayTags(OwnedTags);
+		if (OwnedTags.HasTag(Tag))
+			Matches.Add(Fragment);
+	}
+
+	return Matches;
+}
+
 USingularisItem* USingularisItem::MaterializeFromDefinition(UObject* Outer, USingularisItemDefinition* ItemDefinition)
 {
 	// 1) 零信任校验：Outer 与定义必须有效

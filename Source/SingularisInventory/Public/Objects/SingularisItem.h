@@ -1,10 +1,12 @@
 ﻿#pragma once
 
 #include <CoreMinimal.h>
+#include <type_traits>
 #include <UObject/CoreNetTypes.h>
 #include <UObject/Object.h>
 
 #include "DataAssets/SingularisItemDefinition.h"
+#include "Objects/SingularisItemFragment.h"
 #include "SingularisItem.generated.h"
 
 /**
@@ -52,6 +54,48 @@ public:
 		meta = (DisplayName = "获取物品定义")
 	)
 	USingularisItemDefinition* GetDefinition() const { return Definition; }
+	
+#pragma endregion 
+	
+#pragma region API
+
+	/** 按片段类查询首个匹配片段。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点物品|API",
+		meta = (DisplayName = "按类查询片段")
+	)
+	USingularisItemFragment* FindFragmentByClass(TSubclassOf<USingularisItemFragment> FragmentClass) const;
+
+	/** 按响应标签查询首个匹配片段（层级匹配）。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点物品|API",
+		meta = (DisplayName = "按标签查询片段")
+	)
+	USingularisItemFragment* FindFragmentByTag(const FGameplayTag& Tag) const;
+
+	/** 按响应标签查询全部匹配片段（层级匹配），供执行器逐片段执行。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点物品|API",
+		meta = (DisplayName = "按标签查询全部片段")
+	)
+	TArray<USingularisItemFragment*> FindFragmentsByTag(const FGameplayTag& Tag) const;
+
+	/**
+	 * 按片段类型查询首个匹配片段（C++ 便捷模板）。
+	 * @return 首个类型匹配的片段指针；无匹配返回 nullptr
+	 */
+	template <typename TFragment>
+	TFragment* FindFragment() const
+	{
+		static_assert(
+			std::is_base_of_v<USingularisItemFragment, TFragment>,
+			"TFragment must derive from USingularisItemFragment"
+		);
+		return Cast<TFragment>(FindFragmentByClass(TFragment::StaticClass()));
+	}
 
 #pragma endregion
 
