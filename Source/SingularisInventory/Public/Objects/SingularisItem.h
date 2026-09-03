@@ -77,6 +77,22 @@ public:
 	)
 	USingularisItemFragment* FindFragmentByClass(TSubclassOf<USingularisItemFragment> FragmentClass) const;
 
+	/** 是否存在指定片段类。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点物品|API",
+		meta = (DisplayName = "是否存在片段类")
+	)
+	bool HasFragmentByClass(TSubclassOf<USingularisItemFragment> FragmentClass) const;
+
+	/** 按片段类查询全部匹配片段（含派生类），供批量操作。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点物品|API",
+		meta = (DisplayName = "按类查询全部片段")
+	)
+	TArray<USingularisItemFragment*> FindFragmentsByClass(TSubclassOf<USingularisItemFragment> FragmentClass) const;
+
 	/** 按响应标签查询首个匹配片段（层级匹配）。 */
 	UFUNCTION(
 		BlueprintPure,
@@ -84,6 +100,14 @@ public:
 		meta = (DisplayName = "按标签查询片段")
 	)
 	USingularisItemFragment* FindFragmentByTag(const FGameplayTag& Tag) const;
+
+	/** 是否存在响应指定标签的片段（层级匹配）。 */
+	UFUNCTION(
+		BlueprintPure,
+		Category = "SingularisInventory|引力奇点物品|API",
+		meta = (DisplayName = "是否存在片段标签")
+	)
+	bool HasFragmentByTag(const FGameplayTag& Tag) const;
 
 	/** 按响应标签查询全部匹配片段（层级匹配），供执行器逐片段执行。 */
 	UFUNCTION(

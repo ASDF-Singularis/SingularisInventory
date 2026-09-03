@@ -47,7 +47,7 @@ private:
 #pragma region Internal Variable
 
 	UPROPERTY(Transient, DuplicateTransient, NonTransactional)
-	bool bIsCDO;
+	bool bIsCDO = false;
 
 #pragma endregion
 

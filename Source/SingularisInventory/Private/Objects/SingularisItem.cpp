@@ -19,18 +19,35 @@ USingularisItemFragment* USingularisItem::FindFragmentByClass(
 	const TSubclassOf<USingularisItemFragment> FragmentClass
 ) const
 {
+	// 复用全量查询取首元素，类匹配逻辑保持单点
+	const TArray<USingularisItemFragment*> Matches = FindFragmentsByClass(FragmentClass);
+	return Matches.IsEmpty() ? nullptr : Matches[0];
+}
+
+bool USingularisItem::HasFragmentByClass(const TSubclassOf<USingularisItemFragment> FragmentClass) const
+{
+	// 复用类查询，空指针即不存在
+	return FindFragmentByClass(FragmentClass) != nullptr;
+}
+
+TArray<USingularisItemFragment*> USingularisItem::FindFragmentsByClass(
+	const TSubclassOf<USingularisItemFragment> FragmentClass
+) const
+{
 	// 1) 卫语句：片段类必须有效
 	if (!IsValid(FragmentClass))
-		return nullptr;
+		return {};
 
-	// 2) 线性扫描首个类型匹配片段
+	TArray<USingularisItemFragment*> Matches;
+
+	// 2) 线性扫描全部类型匹配片段（含派生类）
 	for (const TObjectPtr<USingularisItemFragment>& Fragment : Fragments)
 	{
 		if (IsValid(Fragment) && Fragment->IsA(FragmentClass.Get()))
-			return Fragment;
+			Matches.Add(Fragment);
 	}
 
-	return nullptr;
+	return Matches;
 }
 
 USingularisItemFragment* USingularisItem::FindFragmentByTag(const FGameplayTag& Tag) const
@@ -38,6 +55,12 @@ USingularisItemFragment* USingularisItem::FindFragmentByTag(const FGameplayTag& 
 	// 复用全量查询取首元素，标签匹配逻辑保持单点
 	const TArray<USingularisItemFragment*> Matches = FindFragmentsByTag(Tag);
 	return Matches.IsEmpty() ? nullptr : Matches[0];
+}
+
+bool USingularisItem::HasFragmentByTag(const FGameplayTag& Tag) const
+{
+	// 复用标签查询，空指针即不存在
+	return FindFragmentByTag(Tag) != nullptr;
 }
 
 TArray<USingularisItemFragment*> USingularisItem::FindFragmentsByTag(const FGameplayTag& Tag) const
