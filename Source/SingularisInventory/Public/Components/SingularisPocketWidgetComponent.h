@@ -5,6 +5,7 @@
 
 #include "SingularisPocketWidgetComponent.generated.h"
 
+class USingularisPocketComponent;
 class USingularisPocketWidget;
 class USingularisItem;
 class APlayerController;
@@ -90,7 +91,7 @@ private:
 	void ObservePocketComponent();
 
 	/** 主动拉取当前口袋全量状态，经 SPI 推送至控件。 */
-	void RefreshPocket(const class USingularisPocketComponent* PocketComponent) const;
+	void RefreshPocket(const USingularisPocketComponent* PocketComponent) const;
 
 #pragma endregion
 
