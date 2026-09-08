@@ -30,8 +30,6 @@ public:
 	/** 主资产 ID：类型 + 资产名。 */
 	virtual FPrimaryAssetId GetPrimaryAssetId() const override;
 
-#pragma region Parameter
-
 	/**
 	 * 物品标签：物品的唯一标识，与物品形态共同构成标签 -> 形态映射的桥接键。
 	 * 库存子系统经 AssetManager 扫描本定义资产自动化构建映射。
@@ -99,6 +97,4 @@ public:
 		meta = (DisplayName = "物品片段")
 	)
 	TArray<TObjectPtr<USingularisItemFragment>> Fragments{};
-
-#pragma endregion
 };

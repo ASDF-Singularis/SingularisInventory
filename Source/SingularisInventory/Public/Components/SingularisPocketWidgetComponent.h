@@ -76,7 +76,7 @@ public:
 		Category = "SingularisInventory|引力奇点口袋控件|参数",
 		meta = (
 			DisplayName = "口袋视图类",
-			MustImplement = "SingularisPocketViewInterface",
+			MustImplement = "/Script/SingularisInventory.SingularisPocketViewInterface",
 			EditCondition = "PocketViewMode == ESingularisPocketViewMode::AutoCreate"
 		)
 	)
