@@ -24,7 +24,7 @@
 | `Source/SingularisInventory/Private/Interfaces/SingularisPocketViewInterface.cpp` | 新建：仅含 include（同构 `SingularisItemFormActorInterface.cpp`） |
 | `Source/SingularisInventory/Public/Types/SingularisPocketType.h` | 修改：新增 `ESingularisPocketViewMode` |
 | `Source/SingularisInventory/Public/Widgets/SingularisPocketWidget.h` | 修改：继承接口、去 `Abstract` |
-| `Source/SingularisInventory/Private/Widgets/SingularisPocketWidget.cpp` | 修改：SPI 声明移除，保留 `_Implementation` 覆写 |
+| `Source/SingularisInventory/Private/Widgets/SingularisPocketWidget.cpp` | 无变更：SPI 声明位于头文件，cpp 函数定义签名不变 |
 | `Source/SingularisInventory/Public/Components/SingularisPocketWidgetComponent.h` | 修改：双路径重构 |
 | `Source/SingularisInventory/Private/Components/SingularisPocketWidgetComponent.cpp` | 修改：双路径重构 |
 | `Content/UserInterfaces/WBP_SingularisInventory_SingularisPocketWidget` | 迁移：重编译重保存 |
