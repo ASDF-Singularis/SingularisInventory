@@ -109,6 +109,30 @@ void USingularisPocketWidgetComponent::SetPocketView(
 		TryStartObservation();
 }
 
+void USingularisPocketWidgetComponent::HandleItemAdded(const int32 SlotIndex, USingularisItem* Item) const
+{
+	if (!IsValid(PocketView.GetObject()))
+		return;
+
+	ISingularisPocketViewInterface::Execute_OnItemAdded(PocketView.GetObject(), SlotIndex, Item);
+}
+
+void USingularisPocketWidgetComponent::HandleItemRemoved(const int32 SlotIndex, USingularisItem* Item) const
+{
+	if (!IsValid(PocketView.GetObject()))
+		return;
+
+	ISingularisPocketViewInterface::Execute_OnItemRemoved(PocketView.GetObject(), SlotIndex, Item);
+}
+
+void USingularisPocketWidgetComponent::HandleSelectionChanged(const int32 OldSlotIndex, const int32 NewSlotIndex) const
+{
+	if (!IsValid(PocketView.GetObject()))
+		return;
+
+	ISingularisPocketViewInterface::Execute_OnSelectionChanged(PocketView.GetObject(), OldSlotIndex, NewSlotIndex);
+}
+
 APlayerController* USingularisPocketWidgetComponent::ResolveOwningLocalPlayerController() const
 {
 	// 1) Owner 为 Pawn 时，取其控制器；Owner 为 Controller 时直接使用
@@ -160,7 +184,7 @@ void USingularisPocketWidgetComponent::CreatePocketView()
 
 	// 3) 零信任校验：MustImplement 仅约束编辑器选择器，C++ / 蓝图图赋值可绕过，运行时复核接口实现
 	if (!ensureMsgf(
-		CreatedWidget->ImplementsInterface(USingularisPocketViewInterface::StaticClass()),
+		CreatedWidget->Implements<USingularisPocketViewInterface>(),
 		TEXT("[%s] CreatePocketView：视图类 %s 未实现 SingularisPocketViewInterface"),
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(PocketWidgetClass.Get())
@@ -262,28 +286,4 @@ void USingularisPocketWidgetComponent::RefreshPocket(const USingularisPocketComp
 		Items,
 		PocketComponent->GetSelectedIndex()
 	);
-}
-
-void USingularisPocketWidgetComponent::HandleItemAdded(const int32 SlotIndex, USingularisItem* Item) const
-{
-	if (!IsValid(PocketView.GetObject()))
-		return;
-
-	ISingularisPocketViewInterface::Execute_OnItemAdded(PocketView.GetObject(), SlotIndex, Item);
-}
-
-void USingularisPocketWidgetComponent::HandleItemRemoved(const int32 SlotIndex, USingularisItem* Item) const
-{
-	if (!IsValid(PocketView.GetObject()))
-		return;
-
-	ISingularisPocketViewInterface::Execute_OnItemRemoved(PocketView.GetObject(), SlotIndex, Item);
-}
-
-void USingularisPocketWidgetComponent::HandleSelectionChanged(const int32 OldSlotIndex, const int32 NewSlotIndex) const
-{
-	if (!IsValid(PocketView.GetObject()))
-		return;
-
-	ISingularisPocketViewInterface::Execute_OnSelectionChanged(PocketView.GetObject(), OldSlotIndex, NewSlotIndex);
 }
