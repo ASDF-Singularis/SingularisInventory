@@ -68,7 +68,9 @@ void USingularisPocketWidgetComponent::EndPlay(const EEndPlayReason::Type EndPla
 	Super::EndPlay(EndPlayReason);
 }
 
-void USingularisPocketWidgetComponent::SetPocketView(const TScriptInterface<ISingularisPocketViewInterface>& NewPocketView)
+void USingularisPocketWidgetComponent::SetPocketView(
+	const TScriptInterface<ISingularisPocketViewInterface>& NewPocketView
+)
 {
 	// 1) 契约显式：外部注入仅 External 模式可用，避免与自动创建路径冲突
 	if (PocketViewMode != ESingularisPocketViewMode::External)
