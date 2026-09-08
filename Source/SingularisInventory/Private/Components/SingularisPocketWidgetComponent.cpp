@@ -56,7 +56,8 @@ void USingularisPocketWidgetComponent::EndPlay(const EEndPlayReason::Type EndPla
 	//    External 路径：视图为用户资产，不做任何生命周期操作
 	if (PocketViewMode == ESingularisPocketViewMode::AutoCreate)
 	{
-		if (UUserWidget* PocketUserWidget = Cast<UUserWidget>(PocketView.GetObject()))
+		UUserWidget* PocketUserWidget = Cast<UUserWidget>(PocketView.GetObject());
+		if (IsValid(PocketUserWidget))
 			PocketUserWidget->RemoveFromParent();
 	}
 
@@ -86,8 +87,21 @@ void USingularisPocketWidgetComponent::SetPocketView(const TScriptInterface<ISin
 
 	if (bBound)
 	{
-		if (IsValid(PocketView.GetObject()) && IsValid(ResolvedPocketComponent.Get()))
-			RefreshPocket(ResolvedPocketComponent.Get());
+		if (!IsValid(PocketView.GetObject()))
+			return;
+
+		if (!IsValid(ResolvedPocketComponent.Get()))
+		{
+			UE_LOG(
+				LogSingularisInventory,
+				Warning,
+				TEXT("[%s] SetPocketView：口袋组件已失效，跳过全量刷新"),
+				*GetNameSafe(GetOwner())
+			);
+			return;
+		}
+
+		RefreshPocket(ResolvedPocketComponent.Get());
 	}
 	else
 		TryStartObservation();
@@ -149,7 +163,16 @@ void USingularisPocketWidgetComponent::CreatePocketView()
 		*GetNameSafe(GetOwner()),
 		*GetNameSafe(PocketWidgetClass.Get())
 	))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Error,
+			TEXT("[%s] CreatePocketView：视图类 %s 未实现 SingularisPocketViewInterface"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(PocketWidgetClass.Get())
+		);
 		return;
+	}
 
 	// 4) 写入视图并加入视口；TScriptInterface 赋值自动计算接口指针
 	PocketView = CreatedWidget;
