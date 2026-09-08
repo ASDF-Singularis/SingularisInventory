@@ -13,7 +13,7 @@
  * 默认口袋视图：实现 ISingularisPocketViewInterface，框架（USingularisPocketWidgetComponent）
  * 经接口推送口袋状态与数据。用户在蓝图或 C++ 子类中覆写 SPI，更新具体控件实现。
  */
-UCLASS(Blueprintable)
+UCLASS(Abstract, Blueprintable)
 class SINGULARISINVENTORY_API USingularisPocketWidget : public UUserWidget, public ISingularisPocketViewInterface
 {
 	GENERATED_BODY()
