@@ -1,9 +1,9 @@
 #pragma once
 
 #include <CoreMinimal.h>
+#include <MaterialExpressionIO.h>
+#include <Materials/MaterialExpression.h>
 
-#include "MaterialExpressionIO.h"
-#include "Materials/MaterialExpression.h"
 #include "SingularisMaterialExpressionCurvedScreenUV.generated.h"
 
 /**
@@ -12,7 +12,7 @@
  * 将输入 UV 按有理分式模型 r' = r / (1 + k·r²) 映射为向外凸起的桶形，
  * 与 Plugins/SingularisInventory/Shaders/Barrel.usf 中的 AdvancedCurveScreenUV 等价。
  * 相比在材质蓝图 Custom Node 中手写 include 调用，本节点由 C++ 直接生成 HLSL，
- * 提供类型安全的输入/输出与编辑器内可调的回退参数。
+ * 提供类型安全的输入/输出与编辑器内可调的曲率回退参数。
  */
 UCLASS(CollapseCategories, HideCategories = Object)
 class SINGULARISINVENTORY_API USingularisMaterialExpressionCurvedScreenUV : public UMaterialExpression
@@ -31,8 +31,8 @@ public:
 	UPROPERTY(meta = (RequiredInput = "false", ToolTip = "Defaults to 'DefaultCurvatureStrength' if not specified"))
 	FExpressionInput CurvatureStrength;
 
-	/** 渲染目标宽高比输入，用于补偿非正方形像素，未连接时使用 DefaultAspectRatio。 */
-	UPROPERTY(meta = (RequiredInput = "false", ToolTip = "Defaults to 'DefaultAspectRatio' if not specified"))
+	/** 渲染目标宽高比输入，用于补偿非正方形像素；未连接时按视口宽高比自动推导。 */
+	UPROPERTY(meta = (RequiredInput = "false", ToolTip = "Defaults to the viewport width / height ratio if not specified"))
 	FExpressionInput AspectRatio;
 
 	/** 仅当 CurvatureStrength 输入未连接时生效的曲率强度回退值。 */
@@ -43,20 +43,12 @@ public:
 	)
 	float DefaultCurvatureStrength = 0.1f;
 
-	/** 仅当 AspectRatio 输入未连接时生效的宽高比回退值。 */
-	UPROPERTY(
-		EditAnywhere,
-		Category = MaterialExpressionCurvedScreenUV,
-		meta = (OverridingInputProperty = "AspectRatio")
-	)
-	float DefaultAspectRatio = 1.777f;
-
 #if WITH_EDITOR
-	//~ Begin UMaterialExpression Interface
+	
 	virtual int32 Compile(class FMaterialCompiler* Compiler, int32 OutputIndex) override;
 	virtual void GetCaption(TArray<FString>& OutCaptions) const override;
 	virtual FText GetCreationName() const override;
 	virtual FText GetCreationDescription() const override;
-	//~ End UMaterialExpression Interface
+	
 #endif
 };
