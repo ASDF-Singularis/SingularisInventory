@@ -25,9 +25,7 @@ void USingularisItemComponent::BeginPlay()
 
 	// 1) 设计期按自身类映射生成：仅权威端、编辑器加载的物品形态、尚未持有物品时执行
 	//    SpawnItemInWorld 路径由调用方显式 BindItem，本分支不应触发
-	if (GetOwner()->HasAuthority()
-		&& GetOwner()->HasAllFlags(RF_WasLoaded)
-		&& !HasItem())
+	if (GetOwner()->HasAuthority() && !HasItem())
 	{
 		// 2) 经全局查询子系统按自身类反查物品定义，映射由子系统自动化构建
 		const UGameInstance* const GameInstance = GetWorld()->GetGameInstance();

@@ -10,7 +10,6 @@ ASingularisItemFormActor::ASingularisItemFormActor()
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
 
-	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("SceneComponent"));
 	ItemComponent = CreateDefaultSubobject<USingularisItemComponent>(TEXT("ItemComponent"));
 }
 
@@ -30,4 +29,9 @@ void ASingularisItemFormActor::BeginPlay()
 void ASingularisItemFormActor::Tick(const float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+}
+
+USingularisItemComponent* ASingularisItemFormActor::GetItemComponent_Implementation()
+{
+	return ItemComponent;
 }

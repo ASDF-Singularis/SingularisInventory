@@ -3,33 +3,23 @@
 #include <CoreMinimal.h>
 #include <GameFramework/Actor.h>
 
+#include "Interfaces/SingularisItemFormActorInterface.h"
 #include "SingularisItemFormActor.generated.h"
 
 class USingularisItemComponent;
 
 UCLASS(Abstract, Blueprintable)
-class SINGULARISINVENTORY_API ASingularisItemFormActor : public AActor
+class SINGULARISINVENTORY_API ASingularisItemFormActor : public AActor,public ISingularisItemFormActorInterface
 {
 	GENERATED_BODY()
 
 public:
-#pragma region Instantiation
-
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly)
 	TObjectPtr<USingularisItemComponent> ItemComponent = nullptr;
 
-#pragma endregion
-
-#pragma region Constructors
-
 	ASingularisItemFormActor();
-
-#pragma endregion
-
-#pragma region Actor Interface
-
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
-#pragma endregion
+	virtual USingularisItemComponent* GetItemComponent_Implementation() override;
 };
