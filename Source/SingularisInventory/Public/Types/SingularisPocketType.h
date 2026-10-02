@@ -37,8 +37,10 @@ struct SINGULARISINVENTORY_API FSingularisPocketSlot
 {
 	GENERATED_BODY()
 
+	/** 插槽持有的物品实例；空插槽为 nullptr。 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	USingularisItem* Item = nullptr;
 
+	/** 插槽是否为空。 */
 	bool IsEmpty() const { return !IsValid(Item); }
 };

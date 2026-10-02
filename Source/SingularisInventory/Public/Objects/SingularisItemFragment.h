@@ -54,6 +54,7 @@ public:
 private:
 #pragma region State
 
+	/** 是否为类默认对象：控制 FragmentTags 仅可在 CDO 上编辑。 */
 	UPROPERTY(Transient, DuplicateTransient, NonTransactional)
 	bool bIsCDO = false;
 

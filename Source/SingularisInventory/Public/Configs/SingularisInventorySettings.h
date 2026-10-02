@@ -8,6 +8,12 @@
 class UDataTable;
 class USingularisItem;
 
+/**
+ * 引力奇点库存插件设置。
+ *
+ * 插件级开发者设置（Project Settings → Singularis → Singularis Inventory）：
+ * 指定物品实例类与物品形态注册表。仅物品实例类参与运行时；注册表当前无消费方。
+ */
 UCLASS(Config = SingularisInventory, DefaultConfig)
 class SINGULARISINVENTORY_API USingularisInventorySettings : public UDeveloperSettings
 {

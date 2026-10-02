@@ -168,9 +168,10 @@ USingularisItem* USingularisInventoryComponent::PickupItem(AActor* FormActor)
 	const USingularisInventorySubsystem* InventorySubsystem =
 		GetWorld()->GetGameInstance()->GetSubsystem<USingularisInventorySubsystem>();
 
-	// 1) 收容出世界（TakeItem + Destroy），未指定容器，返回实例
+	// 1) 收容出世界（TakeItem + Destroy），未指定容器，返回实例；失败时 CollectItem 已记录日志
 	USingularisItem* Item = InventorySubsystem->CollectItem(FormActor);
-	if (Item == nullptr) return nullptr; // CollectItem 已记录日志
+	if (Item == nullptr)
+		return nullptr;
 
 	// 2) 按规则路由入口袋：选中插槽为空则优放入选中插槽，否则寻找首个空插槽
 	USingularisPocketComponent* Pocket = GetPocketComponent();

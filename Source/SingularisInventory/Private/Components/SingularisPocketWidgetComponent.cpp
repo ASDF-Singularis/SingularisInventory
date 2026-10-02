@@ -5,6 +5,7 @@
 #include <GameFramework/PlayerController.h>
 #include <UObject/ConstructorHelpers.h>
 
+#include "SingularisInventory.h"
 #include "Components/SingularisPocketComponent.h"
 #include "Interfaces/SingularisPocketViewInterface.h"
 #include "Objects/SingularisItem.h"
@@ -34,11 +35,15 @@ void USingularisPocketWidgetComponent::BeginPlay()
 
 	OwnerPlayerController = ResolveOwningLocalPlayerController();
 
-	// 1) 自动创建视图
+	// 1) 非本地控制器端无需驱动视图，静默跳过
+	if (!OwnerPlayerController.IsValid())
+		return;
+
+	// 2) 自动创建视图
 	if (bAutoCreateView)
 		CreatePocketView();
 
-	// 2) 绑定口袋组件并推送一次全量状态
+	// 3) 绑定口袋组件并推送一次全量状态
 	ObservePocketComponent();
 }
 
@@ -48,7 +53,17 @@ void USingularisPocketWidgetComponent::EndPlay(const EEndPlayReason::Type EndPla
 	if (bAutoCreateView)
 	{
 		if (UUserWidget* const PocketUserWidget = Cast<UUserWidget>(PocketView.GetObject()))
+		{
 			PocketUserWidget->RemoveFromParent();
+
+			UE_LOG(
+				LogSingularisInventory,
+				Display,
+				TEXT("[%s] EndPlay：口袋视图 %s 已从视口移除"),
+				*GetNameSafe(GetOwner()),
+				*GetNameSafe(PocketUserWidget)
+			);
+		}
 	}
 
 	// 2) 清空引用，事件绑定随组件销毁自动失效
@@ -70,10 +85,19 @@ void USingularisPocketWidgetComponent::SetPocketView(
 		return;
 	PocketView = NewPocketView;
 
-	// 3) 外部注入后主动拉取一次全量状态，消除错过事件导致的空白期
+	// 3) 非本地控制器端无视图宿主，无法推送
 	if (!OwnerPlayerController.IsValid())
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] SetPocketView：非本地控制器，无法推送视图状态"),
+			*GetNameSafe(GetOwner())
+		);
 		return;
+	}
 
+	// 4) 外部注入后主动拉取一次全量状态，消除错过事件导致的空白期
 	FullPull(ResolvePocketComponent());
 }
 
@@ -122,7 +146,16 @@ void USingularisPocketWidgetComponent::CreatePocketView()
 	// 2) 创建口袋控件
 	UUserWidget* const CreatedWidget = CreateWidget<UUserWidget>(OwnerPlayerController.Get(), PocketWidgetClass);
 	if (!IsValid(CreatedWidget))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] CreatePocketView：控件类 %s 创建控件失败"),
+			*GetNameSafe(GetOwner()),
+			*GetNameSafe(PocketWidgetClass.Get())
+		);
 		return;
+	}
 
 	// MustImplement 仅约束编辑器选择器，C++ 与蓝图图赋值可绕过，创建后运行时复核接口实现
 	if (!ensureMsgf(
@@ -136,6 +169,14 @@ void USingularisPocketWidgetComponent::CreatePocketView()
 	// 3) 缓存视图并添加到视口
 	PocketView = CreatedWidget;
 	CreatedWidget->AddToViewport();
+
+	UE_LOG(
+		LogSingularisInventory,
+		Display,
+		TEXT("[%s] CreatePocketView：口袋视图 %s 创建成功"),
+		*GetNameSafe(GetOwner()),
+		*GetNameSafe(CreatedWidget)
+	);
 }
 
 USingularisPocketComponent* USingularisPocketWidgetComponent::ResolvePocketComponent() const
@@ -158,7 +199,15 @@ void USingularisPocketWidgetComponent::ObservePocketComponent()
 	// 2) 获取同属主的口袋组件
 	USingularisPocketComponent* const PocketComponent = ResolvePocketComponent();
 	if (!IsValid(PocketComponent))
+	{
+		UE_LOG(
+			LogSingularisInventory,
+			Warning,
+			TEXT("[%s] ObservePocketComponent：未在所控 Pawn 上找到口袋组件"),
+			*GetNameSafe(GetOwner())
+		);
 		return;
+	}
 
 	// 3) 绑定口袋事件
 	PocketComponent->OnItemAddedEvent.AddDynamic(this, &USingularisPocketWidgetComponent::HandleItemAdded);
@@ -170,21 +219,30 @@ void USingularisPocketWidgetComponent::ObservePocketComponent()
 
 	// 4) 绑定后主动拉取一次全量状态，消除错过事件导致的空白期
 	FullPull(PocketComponent);
+
+	UE_LOG(
+		LogSingularisInventory,
+		Display,
+		TEXT("[%s] ObservePocketComponent：已绑定口袋组件 %s"),
+		*GetNameSafe(GetOwner()),
+		*GetNameSafe(PocketComponent)
+	);
 }
 
 void USingularisPocketWidgetComponent::FullPull(const USingularisPocketComponent* PocketComponent) const
 {
+	// 1) 零信任校验：视图与口袋组件必须有效
 	if (!IsValid(PocketView.GetObject()) || !IsValid(PocketComponent))
 		return;
 
-	// 1) 聚合各插槽物品
+	// 2) 聚合各插槽物品
 	const int32 Capacity = PocketComponent->Capacity;
 	TArray<USingularisItem*> Items;
 	Items.Reserve(Capacity);
 	for (auto Index = 0; Index < Capacity; ++Index)
 		Items.Add(PocketComponent->GetItem(Index));
 
-	// 2) 经 SPI 推送全量状态
+	// 3) 经 SPI 推送全量状态
 	ISingularisPocketViewInterface::Execute_OnPocketRefresh(
 		PocketView.GetObject(),
 		Capacity,

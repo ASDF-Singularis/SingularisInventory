@@ -178,6 +178,7 @@ public:
 
 #pragma region API
 
+	/** 插槽是否全部为空。 */
 	UFUNCTION(
 		BlueprintPure,
 		Category = "引力奇点口袋组件|API",
@@ -185,6 +186,7 @@ public:
 	)
 	bool IsEmpty() const;
 
+	/** 插槽是否全部占满。 */
 	UFUNCTION(
 		BlueprintPure,
 		Category = "引力奇点口袋组件|API",
@@ -192,6 +194,10 @@ public:
 	)
 	bool IsFull() const;
 
+	/**
+	 * 取指定插槽物品。
+	 * @return 插槽物品；索引非法或空插槽返回 nullptr
+	 */
 	UFUNCTION(
 		BlueprintPure,
 		Category = "引力奇点口袋组件|API",
@@ -199,6 +205,7 @@ public:
 	)
 	USingularisItem* GetItem(int32 SlotIndex) const;
 
+	/** 当前选中插槽索引；INDEX_NONE 表示无选中。 */
 	UFUNCTION(
 		BlueprintPure,
 		Category = "引力奇点口袋组件|API",
@@ -206,6 +213,7 @@ public:
 	)
 	int32 GetSelectedIndex() const { return SelectedSlotIndex; }
 
+	/** 是否存在选中插槽。 */
 	UFUNCTION(
 		BlueprintPure,
 		Category = "引力奇点口袋组件|API",
@@ -213,6 +221,10 @@ public:
 	)
 	bool HasSelection() const { return SelectedSlotIndex != INDEX_NONE; }
 
+	/**
+	 * 取选中插槽物品（即手持物品）。
+	 * @return 选中物品；无选中或选中空槽返回 nullptr
+	 */
 	UFUNCTION(
 		BlueprintPure,
 		Category = "引力奇点口袋组件|API",
@@ -220,6 +232,7 @@ public:
 	)
 	USingularisItem* GetSelectedItem() const;
 
+	/** 当前占用状态（空 / 部分 / 满）。 */
 	UFUNCTION(
 		BlueprintPure,
 		Category = "引力奇点口袋组件|API",

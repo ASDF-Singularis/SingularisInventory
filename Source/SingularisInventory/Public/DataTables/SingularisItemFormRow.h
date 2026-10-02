@@ -32,6 +32,7 @@ struct FSingularisItemFormRow : public FTableRowBase
 	)
 	FGameplayTag ItemTag{};
 
+	/** 物品形态 Actor 类：该物品标签对应的世界形态。 */
 	UPROPERTY(
 		EditAnywhere,
 		BlueprintReadWrite,

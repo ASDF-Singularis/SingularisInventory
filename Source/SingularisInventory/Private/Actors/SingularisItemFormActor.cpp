@@ -29,6 +29,8 @@ void ASingularisItemFormActor::BeginPlay()
 void ASingularisItemFormActor::Tick(const float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// 基类无逐帧逻辑；子类按需扩展
 }
 
 USingularisItemComponent* ASingularisItemFormActor::GetItemComponent_Implementation()

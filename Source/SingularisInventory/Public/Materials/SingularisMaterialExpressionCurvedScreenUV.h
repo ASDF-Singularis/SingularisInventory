@@ -47,9 +47,16 @@ public:
 
 #if WITH_EDITOR
 
+	/** 编译为 HLSL：将输入 UV 经有理分式模型映射为桶形畸变，未连接输入回退到默认值。 */
 	virtual int32 Compile(class FMaterialCompiler* Compiler, int32 OutputIndex) override;
+
+	/** 材质节点标题。 */
 	virtual void GetCaption(TArray<FString>& OutCaptions) const override;
+
+	/** 材质图右键菜单中的创建项名称。 */
 	virtual FText GetCreationName() const override;
+
+	/** 材质图右键菜单中的创建项描述。 */
 	virtual FText GetCreationDescription() const override;
 
 #endif

@@ -94,6 +94,7 @@ public:
 private:
 #pragma region State
 
+	/** 本组件所挂载的玩家控制器（Owner）。 */
 	TWeakObjectPtr<APlayerController> OwnerPlayerController = nullptr;
 
 #pragma endregion
@@ -157,6 +158,7 @@ public:
 private:
 #pragma region RPC
 
+	/** 客户端请求丢弃指定物品，服务端权威结算。 */
 	UFUNCTION(Server, Reliable)
 	void Server_DropItem(USingularisItem* Item);
 
@@ -164,9 +166,13 @@ private:
 
 #pragma region Callback
 
+	/** 选中插槽输入回调：SlotIndex 由绑定时的插槽号捕获。 */
 	void HandleSelectSlot(const FInputActionValue& Value, int32 SlotIndex);
+
+	/** 丢弃输入回调：读本地手持并请求丢弃。 */
 	void HandleDropInputAction(const FInputActionValue& Value);
 
+	/** 所控 Pawn 变更回调：刷新输入映射上下文增删。 */
 	UFUNCTION()
 	void OnPossessPawnChanged(APawn* OldPawn, APawn* NewPawn) const;
 

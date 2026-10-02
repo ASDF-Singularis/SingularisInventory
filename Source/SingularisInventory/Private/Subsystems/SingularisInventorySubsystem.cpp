@@ -109,6 +109,7 @@ USingularisItemDefinition* USingularisInventorySubsystem::FindDefinitionByFormAc
 	const TSubclassOf<AActor> FormActorClass
 ) const
 {
+	// 查不到不记录，交由调用方按上下文判定（如 ItemComponent::BeginPlay 已告警），避免重复日志
 	const TObjectPtr<USingularisItemDefinition>* const Definition = FormActorToDefinitionMap.Find(FormActorClass);
 	return Definition != nullptr ? Definition->Get() : nullptr;
 }
@@ -254,6 +255,7 @@ void USingularisInventorySubsystem::RebuildRegistry()
 			LoadHandle->WaitUntilComplete();
 	}
 
+	// 5) 逐资产读取已驻留定义，写入标签映射；无标签或无效定义跳过
 	for (const FPrimaryAssetId& AssetId : AssetIds)
 	{
 		USingularisItemDefinition* const Definition =
@@ -275,7 +277,7 @@ void USingularisInventorySubsystem::RebuildRegistry()
 		TagToFormActorMap.Num()
 	);
 
-	// 5) 经标签桥接推导 Definition <-> FormActorClass 双向映射
+	// 6) 经标签桥接推导 Definition <-> FormActorClass 双向映射
 	RebuildDefinitionFormMaps();
 
 	UE_LOG(
@@ -441,9 +443,11 @@ USingularisItem* USingularisInventorySubsystem::CollectItem(AActor* FormActor) c
 
 void USingularisInventorySubsystem::RebuildDefinitionFormMaps()
 {
+	// 1) 清空旧映射，避免残留脏数据
 	DefinitionToFormActorMap.Empty();
 	FormActorToDefinitionMap.Empty();
 
+	// 2) 以标签为桥接键，逐条推导定义 <-> 形态双向映射
 	for (const auto& Pair : TagToFormActorMap)
 	{
 		const TObjectPtr<USingularisItemDefinition>* const Definition = TagToDefinitionMap.Find(Pair.Key);

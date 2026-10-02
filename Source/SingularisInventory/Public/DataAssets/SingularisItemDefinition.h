@@ -61,6 +61,7 @@ public:
 	)
 	TSubclassOf<AActor> FormActorClass{};
 
+	/** 物品显示名称。 */
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
@@ -69,6 +70,7 @@ public:
 	)
 	FText Name{};
 
+	/** 物品描述文本。 */
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
@@ -77,6 +79,7 @@ public:
 	)
 	FText Description{};
 
+	/** 物品图标。 */
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,

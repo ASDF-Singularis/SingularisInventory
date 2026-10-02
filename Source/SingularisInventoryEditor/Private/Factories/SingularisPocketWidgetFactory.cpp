@@ -20,15 +20,15 @@ UObject* USingularisPocketWidgetFactory::FactoryCreateNew(
 	FFeedbackContext* Warn
 )
 {
+	// 1) 利用 KismetEditorUtilities 自动生成控件蓝图资产
+	// 2) 指定 UWidgetBlueprint 蓝图类型与 UWidgetBlueprintGeneratedClass 生成类类型
 	return FKismetEditorUtilities::CreateBlueprint(
 		USingularisPocketWidget::StaticClass(),
 		InParent,
 		InName,
 		BPTYPE_Normal,
 		UWidgetBlueprint::StaticClass(),
-		// 必须指定为 UWidgetBlueprint
 		UWidgetBlueprintGeneratedClass::StaticClass(),
-		// 必须指定生成的类类型
 		NAME_None
 	);
 }

@@ -52,7 +52,7 @@ public:
 
 	virtual UFactory* GetFactoryForBlueprintType(UBlueprint* InBlueprint) const override
 	{
-		// 这里创建一个工厂实例给编辑器使用
+		// 1) 动态实例化工厂对象以接管该资产蓝图的创建流程
 		USingularisPocketWidgetFactory* Factory = NewObject<USingularisPocketWidgetFactory>();
 		return Factory;
 	}
@@ -61,6 +61,7 @@ public:
 
 	virtual const TArray<FText>& GetSubMenus() const override
 	{
+		// 1) 将资产收纳至右键菜单的指定子目录中
 		static const TArray SubMenus = {
 			FText::FromString("SingularisInventory"),
 		};

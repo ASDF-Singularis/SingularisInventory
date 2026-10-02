@@ -181,36 +181,30 @@ void USingularisItemComponent::ClearItem()
 
 void USingularisItemComponent::RegisterItemSubObject()
 {
-	if (Item == nullptr)
+	// 1) 卫语句：空持有或非权威端无需注册
+	if (Item == nullptr || !GetOwner()->HasAuthority())
 		return;
 
-	if (GetOwner()->HasAuthority())
+	// 2) 注册物品实例及其片段运行时副本为复制子对象
+	AddReplicatedSubObject(Item.Get());
+	for (const TObjectPtr<USingularisItemFragment>& Fragment : Item->GetFragments())
 	{
-		AddReplicatedSubObject(Item.Get());
-
-		// 注册片段运行时副本为复制子对象
-		for (const TObjectPtr<USingularisItemFragment>& Fragment : Item->GetFragments())
-		{
-			if (IsValid(Fragment))
-				AddReplicatedSubObject(Fragment.Get());
-		}
+		if (IsValid(Fragment))
+			AddReplicatedSubObject(Fragment.Get());
 	}
 }
 
 void USingularisItemComponent::UnregisterItemSubObject()
 {
-	if (Item == nullptr)
+	// 1) 卫语句：空持有或非权威端无需注销
+	if (Item == nullptr || !GetOwner()->HasAuthority())
 		return;
 
-	if (GetOwner()->HasAuthority())
+	// 2) 注销物品实例及其片段运行时副本
+	RemoveReplicatedSubObject(Item.Get());
+	for (const TObjectPtr<USingularisItemFragment>& Fragment : Item->GetFragments())
 	{
-		RemoveReplicatedSubObject(Item.Get());
-
-		// 注销片段运行时副本
-		for (const TObjectPtr<USingularisItemFragment>& Fragment : Item->GetFragments())
-		{
-			if (IsValid(Fragment))
-				RemoveReplicatedSubObject(Fragment.Get());
-		}
+		if (IsValid(Fragment))
+			RemoveReplicatedSubObject(Fragment.Get());
 	}
 }

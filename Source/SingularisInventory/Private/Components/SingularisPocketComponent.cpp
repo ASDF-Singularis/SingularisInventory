@@ -193,7 +193,8 @@ bool USingularisPocketComponent::AddItemAt(USingularisItem* Item, const int32 Sl
 		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] AddItemAt：插槽 %d 已被占用"), *GetNameSafe(GetOwner()), SlotIndex);
 		return false;
 	}
-	if (FindSlotOfItem(Item) != INDEX_NONE)
+	const int32 ExistingSlot = FindSlotOfItem(Item);
+	if (ExistingSlot != INDEX_NONE)
 	{
 		UE_LOG(
 			LogSingularisInventory,
@@ -201,7 +202,7 @@ bool USingularisPocketComponent::AddItemAt(USingularisItem* Item, const int32 Sl
 			TEXT("[%s] AddItemAt：物品 %s 已在插槽 %d"),
 			*GetNameSafe(GetOwner()),
 			*GetNameSafe(Item),
-			FindSlotOfItem(Item)
+			ExistingSlot
 		);
 		return false;
 	}
@@ -225,12 +226,14 @@ bool USingularisPocketComponent::AddItemAt(USingularisItem* Item, const int32 Sl
 
 bool USingularisPocketComponent::RemoveItem(USingularisItem* Item)
 {
+	// 1) 零信任校验：空入参直接失败
 	if (Item == nullptr)
 	{
 		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] RemoveItem：物品实例为空"), *GetNameSafe(GetOwner()));
 		return false;
 	}
 
+	// 2) 定位物品所在插槽，未在口袋中则失败
 	const int32 TargetSlot = FindSlotOfItem(Item);
 	if (TargetSlot == INDEX_NONE)
 	{
@@ -244,6 +247,7 @@ bool USingularisPocketComponent::RemoveItem(USingularisItem* Item)
 		return false;
 	}
 
+	// 3) 复用 RemoveItemAt 完成移除
 	return RemoveItemAt(TargetSlot) != nullptr;
 }
 
@@ -416,6 +420,7 @@ void USingularisPocketComponent::SwapSlots(const int32 SlotIndexA, const int32 S
 
 void USingularisPocketComponent::Clear()
 {
+	// 1) 逐插槽清空：注销复制子对象、广播原子移除
 	auto ClearedCount = 0;
 
 	for (auto i = 0; i < Slots.Num(); ++i)

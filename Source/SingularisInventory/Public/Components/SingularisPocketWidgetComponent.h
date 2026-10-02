@@ -60,7 +60,7 @@ public:
 private:
 #pragma region State
 
-	/** 拥有本组件的本地玩家控制器 */
+	/** 拥有本组件的本地玩家控制器，非本地端为空。 */
 	TWeakObjectPtr<APlayerController> OwnerPlayerController = nullptr;
 
 	/** 运行时实例化的口袋视图缓存 */

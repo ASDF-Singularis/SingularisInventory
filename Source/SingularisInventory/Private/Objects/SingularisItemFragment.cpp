@@ -27,9 +27,12 @@ bool USingularisItemFragment::CanEditChange(const FProperty* InProperty) const
 void USingularisItemFragment::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// 基类无复制属性；子类在此 DOREPLIFETIME 扩展自身状态
 }
 
 void USingularisItemFragment::GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const
 {
+	// 默认以 FragmentTags 为数据源；子类可覆写以动态计算响应范围
 	TagContainer = FragmentTags;
 }
