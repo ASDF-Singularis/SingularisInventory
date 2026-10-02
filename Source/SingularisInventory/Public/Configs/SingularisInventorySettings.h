@@ -19,7 +19,7 @@ public:
 		Config,
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物库存|参数",
+		Category = "引力奇点物库存设置",
 		meta = (DisplayName = "物品实例类")
 	)
 	TSubclassOf<USingularisItem> ItemClass = nullptr;
@@ -29,7 +29,7 @@ public:
 		Config,
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物库存|参数",
+		Category = "引力奇点物库存设置",
 		meta = (
 			DisplayName = "物品形态注册表",
 			RequiredAssetDataTags = "RowStructure=/Script/SingularisInventory.SingularisItemFormRow"

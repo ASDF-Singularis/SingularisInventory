@@ -77,7 +77,7 @@ public:
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点口袋|参数",
+		Category = "引力奇点口袋组件",
 		meta = (DisplayName = "容量", ClampMin = "1")
 	)
 	int32 Capacity = 4;
@@ -89,53 +89,53 @@ public:
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点口袋组件|参数",
+		Category = "引力奇点口袋组件",
 		meta = (DisplayName = "初始物品定义")
 	)
 	TArray<TObjectPtr<USingularisItemDefinition>> InitialDefinitions{};
 
 #pragma endregion
 
-#pragma region 事件分发器
+#pragma region Event Dispatcher
 
 	UPROPERTY(
 		BlueprintAssignable,
-		Category = "SingularisInventory|引力奇点口袋|事件分发器",
+		Category = "引力奇点口袋组件|事件分发器",
 		meta = (DisplayName = "物品加入")
 	)
 	FOnItemAddedSignature OnItemAddedEvent{};
 
 	UPROPERTY(
 		BlueprintAssignable,
-		Category = "SingularisInventory|引力奇点口袋|事件分发器",
+		Category = "引力奇点口袋组件|事件分发器",
 		meta = (DisplayName = "物品移除")
 	)
 	FOnItemRemovedSignature OnItemRemovedEvent{};
 
 	UPROPERTY(
 		BlueprintAssignable,
-		Category = "SingularisInventory|引力奇点口袋|事件分发器",
+		Category = "引力奇点口袋组件|事件分发器",
 		meta = (DisplayName = "选中变化")
 	)
 	FOnSelectionChangedSignature OnSelectionChangedEvent{};
 
 	UPROPERTY(
 		BlueprintAssignable,
-		Category = "SingularisInventory|引力奇点口袋|事件分发器",
+		Category = "引力奇点口袋组件|事件分发器",
 		meta = (DisplayName = "选中物品变化")
 	)
 	FOnSelectedItemChangedSignature OnSelectedItemChangedEvent{};
 
 	UPROPERTY(
 		BlueprintAssignable,
-		Category = "SingularisInventory|引力奇点口袋|事件分发器",
+		Category = "引力奇点口袋组件|事件分发器",
 		meta = (DisplayName = "插槽交换")
 	)
 	FOnItemsSwappedSignature OnItemsSwappedEvent{};
 
 	UPROPERTY(
 		BlueprintAssignable,
-		Category = "SingularisInventory|引力奇点口袋|事件分发器",
+		Category = "引力奇点口袋组件|事件分发器",
 		meta = (DisplayName = "占用状态变化")
 	)
 	FOnPocketOccupancyChangedSignature OnPocketOccupancyChangedEvent{};
@@ -143,7 +143,7 @@ public:
 #pragma endregion
 
 private:
-#pragma region Internal Variable
+#pragma region State
 
 	/** 插槽数组，长度恒等于 Capacity。 */
 	UPROPERTY(ReplicatedUsing = OnRep_Slots, Transient, DuplicateTransient)
@@ -176,60 +176,56 @@ public:
 
 #pragma endregion
 
-#pragma region State
+#pragma region API
 
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点口袋|State",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "是否为空")
 	)
 	bool IsEmpty() const;
 
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点口袋|State",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "是否已满")
 	)
 	bool IsFull() const;
 
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点口袋|State",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "获取指定插槽物品")
 	)
 	USingularisItem* GetItem(int32 SlotIndex) const;
 
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点口袋|State",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "获取选中索引")
 	)
 	int32 GetSelectedIndex() const { return SelectedSlotIndex; }
 
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点口袋|State",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "是否有选中")
 	)
 	bool HasSelection() const { return SelectedSlotIndex != INDEX_NONE; }
 
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点口袋|State",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "获取选中物品")
 	)
 	USingularisItem* GetSelectedItem() const;
 
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点口袋|State",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "获取占用状态")
 	)
 	ESingularisPocketOccupancy GetOccupancyState() const;
-
-#pragma endregion
-
-#pragma region API
 
 	/**
 	 * 自动寻找首个空插槽放入物品。
@@ -238,7 +234,7 @@ public:
 	 */
 	UFUNCTION(
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点口袋|API",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "加入物品")
 	)
 	int32 AddItem(USingularisItem* Item);
@@ -250,7 +246,7 @@ public:
 	 */
 	UFUNCTION(
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点口袋|API",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "加入物品至指定插槽")
 	)
 	bool AddItemAt(USingularisItem* Item, int32 SlotIndex);
@@ -261,7 +257,7 @@ public:
 	 */
 	UFUNCTION(
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点口袋|API",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "移除物品")
 	)
 	bool RemoveItem(USingularisItem* Item);
@@ -272,7 +268,7 @@ public:
 	 */
 	UFUNCTION(
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点口袋|API",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "移除指定插槽物品")
 	)
 	USingularisItem* RemoveItemAt(int32 SlotIndex);
@@ -284,7 +280,7 @@ public:
 	 */
 	UFUNCTION(
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点口袋|API",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "移除选中物品")
 	)
 	USingularisItem* RemoveSelectedItem();
@@ -295,7 +291,7 @@ public:
 	 */
 	UFUNCTION(
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点口袋|API",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "选中插槽")
 	)
 	void SelectSlot(int32 SlotIndex);
@@ -303,7 +299,7 @@ public:
 	/** 循环向后选中下一插槽。 */
 	UFUNCTION(
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点口袋|API",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "选中下一")
 	)
 	void SelectNext();
@@ -311,7 +307,7 @@ public:
 	/** 循环向前选中上一插槽。 */
 	UFUNCTION(
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点口袋|API",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "选中上一")
 	)
 	void SelectPrevious();
@@ -319,7 +315,7 @@ public:
 	/** 交换两个插槽内的物品。 */
 	UFUNCTION(
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点口袋|API",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "交换插槽")
 	)
 	void SwapSlots(int32 SlotIndexA, int32 SlotIndexB);
@@ -327,7 +323,7 @@ public:
 	/** 清空全部插槽，依次触发 OnItemRemovedEvent。 */
 	UFUNCTION(
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点口袋|API",
+		Category = "引力奇点口袋组件|API",
 		meta = (DisplayName = "清空口袋")
 	)
 	void Clear();
