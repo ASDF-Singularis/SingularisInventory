@@ -9,7 +9,7 @@
 class USingularisItemComponent;
 
 UCLASS(Abstract, Blueprintable)
-class SINGULARISINVENTORY_API ASingularisItemFormActor : public AActor,public ISingularisItemFormActorInterface
+class SINGULARISINVENTORY_API ASingularisItemFormActor : public AActor, public ISingularisItemFormActorInterface
 {
 	GENERATED_BODY()
 
@@ -18,7 +18,11 @@ public:
 	TObjectPtr<USingularisItemComponent> ItemComponent = nullptr;
 
 	ASingularisItemFormActor();
+
+protected:
 	virtual void BeginPlay() override;
+
+public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual USingularisItemComponent* GetItemComponent_Implementation() override;
