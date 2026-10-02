@@ -37,7 +37,7 @@ public:
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物品定义|参数",
+		Category = "引力奇点物品定义",
 		meta = (
 			DisplayName = "物品标签",
 			Categories = "Singularis.Inventory.Item",
@@ -53,7 +53,7 @@ public:
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物品定义|参数",
+		Category = "引力奇点物品定义",
 		meta = (
 			DisplayName = "物品形态",
 			MustImplement = "/Script/SingularisInventory.SingularisItemFormActorInterface"
@@ -64,7 +64,7 @@ public:
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物品定义|参数",
+		Category = "引力奇点物品定义",
 		meta = (DisplayName = "名称")
 	)
 	FText Name{};
@@ -72,7 +72,7 @@ public:
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物品定义|参数",
+		Category = "引力奇点物品定义",
 		meta = (DisplayName = "描述")
 	)
 	FText Description{};
@@ -80,7 +80,7 @@ public:
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物品定义|参数",
+		Category = "引力奇点物品定义",
 		meta = (DisplayName = "图标")
 	)
 	TObjectPtr<UTexture2D> Icon = nullptr;
@@ -93,7 +93,7 @@ public:
 		Instanced,
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物品定义|参数",
+		Category = "引力奇点物品定义",
 		meta = (DisplayName = "物品片段")
 	)
 	TArray<TObjectPtr<USingularisItemFragment>> Fragments{};
