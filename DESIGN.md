@@ -648,7 +648,7 @@ USingularisItem::MaterializeFromDefinition(Outer, Definition)
 
 ### 9. 日志与断言分级
 
-本插件固化单一日志分类 `LogSingularisInventory`（模块头声明、模块实现定义），并按下述分级记录：
+本插件使用两个日志分类：运行时模块 `LogSingularisInventory`（模块头声明、模块实现定义）与编辑器模块 `LogSingularisInventoryEditor`（编辑器模块头声明、编辑器模块实现定义），按模块分离日志输出；两者均按下述分级记录：
 
 | 级别 | 适用场景 |
 | --- | --- |

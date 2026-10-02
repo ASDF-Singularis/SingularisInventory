@@ -9,8 +9,10 @@ class USingularisItem;
 
 #pragma region 委托签名
 
+/** 物品移入组件时广播。 */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemBoundSignature, USingularisItem*, Item);
 
+/** 物品从组件取出时广播。 */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemReleasedSignature, USingularisItem*, Item);
 
 #pragma endregion

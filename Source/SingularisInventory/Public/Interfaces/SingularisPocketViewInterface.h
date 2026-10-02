@@ -20,6 +20,7 @@ class USingularisPocketViewInterface : public UInterface
 	GENERATED_BODY()
 };
 
+/** 口袋视图实现接口：接收口袋整体的全量刷新与插槽、选中增删事件。 */
 class SINGULARISINVENTORY_API ISingularisPocketViewInterface
 {
 	GENERATED_BODY()

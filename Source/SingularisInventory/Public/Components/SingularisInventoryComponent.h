@@ -56,6 +56,7 @@ public:
 	)
 	float DropZOffset = 50.0f;
 
+	/** 输入优先级。 */
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
@@ -64,6 +65,7 @@ public:
 	)
 	int32 InputPriority = 10;
 
+	/** 输入映射上下文。 */
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
@@ -72,6 +74,7 @@ public:
 	)
 	TObjectPtr<UInputMappingContext> InputMappingContext = nullptr;
 
+	/** 丢弃输入动作。 */
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
