@@ -1,9 +1,11 @@
 #include "Subsystems/SingularisInventorySubsystem.h"
 
+#include <AssetRegistry/IAssetRegistry.h>
 #include <Components/PrimitiveComponent.h>
 #include <Engine/AssetManager.h>
 #include <Engine/EngineTypes.h>
 #include <Engine/GameInstance.h>
+#include <Engine/StreamableManager.h>
 #include <Engine/World.h>
 #include <GameFramework/Actor.h>
 
@@ -157,23 +159,20 @@ bool USingularisInventorySubsystem::RegisterItemForm(
 	const FGameplayTag ItemTag = Definition->ItemTag;
 
 	// 2) 幂等：同一关联已注册则无副作用
-	if (const TSubclassOf<AActor>* const ExistingForm = DefinitionToFormActorMap.Find(Definition))
-	{
-		if (*ExistingForm == FormActorClass)
-			return true;
-	}
+	const TSubclassOf<AActor>* const ExistingForm = DefinitionToFormActorMap.Find(Definition);
+	if (ExistingForm != nullptr && *ExistingForm == FormActorClass)
+		return true;
 
 	// 3) 拆除新形态的旧标签关联，保证标签映射唯一
-	if (const TObjectPtr<USingularisItemDefinition>* const ExistingDefinition = FormActorToDefinitionMap.Find(
+	const TObjectPtr<USingularisItemDefinition>* const ExistingDefinition = FormActorToDefinitionMap.Find(
 		FormActorClass
-	))
+	);
+	if (ExistingDefinition != nullptr)
 	{
 		const FGameplayTag ExistingTag = (*ExistingDefinition)->ItemTag;
-		if (const TSubclassOf<AActor>* const TaggedForm = TagToFormActorMap.Find(ExistingTag))
-		{
-			if (*TaggedForm == FormActorClass)
-				TagToFormActorMap.Remove(ExistingTag);
-		}
+		const TSubclassOf<AActor>* const TaggedForm = TagToFormActorMap.Find(ExistingTag);
+		if (TaggedForm != nullptr && *TaggedForm == FormActorClass)
+			TagToFormActorMap.Remove(ExistingTag);
 	}
 
 	// 4) 写入标签映射，重建定义-形态双向映射
@@ -213,11 +212,9 @@ bool USingularisInventorySubsystem::UnregisterItemForm(USingularisItemDefinition
 		return false;
 
 	// 3) 拆除标签 -> 形态关联并重建双向映射（物品定义映射保持可查）
-	if (const TSubclassOf<AActor>* const TaggedForm = TagToFormActorMap.Find(Definition->ItemTag))
-	{
-		if (*TaggedForm == *ExistingForm)
-			TagToFormActorMap.Remove(Definition->ItemTag);
-	}
+	const TSubclassOf<AActor>* const TaggedForm = TagToFormActorMap.Find(Definition->ItemTag);
+	if (TaggedForm != nullptr && *TaggedForm == *ExistingForm)
+		TagToFormActorMap.Remove(Definition->ItemTag);
 	RebuildDefinitionFormMaps();
 
 	UE_LOG(
@@ -232,17 +229,30 @@ bool USingularisInventorySubsystem::UnregisterItemForm(USingularisItemDefinition
 
 void USingularisInventorySubsystem::RebuildRegistry()
 {
-	// 1) 清空旧映射，避免残留脏数据
+	// 1) 等待资产注册表完成首轮资产发现：编辑器下发现异步进行，过早查询会枚举到空集合
+	IAssetRegistry* const AssetRegistry = IAssetRegistry::Get();
+	if (AssetRegistry != nullptr && AssetRegistry->IsLoadingAssets())
+		AssetRegistry->WaitForCompletion();
+
+	// 2) 清空旧映射，避免残留脏数据
 	TagToFormActorMap.Empty();
 	TagToDefinitionMap.Empty();
 	DefinitionToFormActorMap.Empty();
 	FormActorToDefinitionMap.Empty();
 
-	// 2) 经 AssetManager 扫描物品定义资产，构建标签 / 形态映射（单一数据源）
+	// 3) 经 AssetManager 枚举物品定义资产（单一数据源）
 	UAssetManager& AssetManager = UAssetManager::Get();
 	TArray<FPrimaryAssetId> AssetIds;
 	AssetManager.GetPrimaryAssetIdList(USingularisItemDefinition::ItemType, AssetIds);
-	AssetManager.LoadPrimaryAssets(AssetIds);
+
+	// 4) 阻塞至主资产加载完成：LoadPrimaryAssets 为异步请求，
+	//    GetPrimaryAssetObject 仅返回已驻留内存的对象，不等待会取到空定义
+	if (!AssetIds.IsEmpty())
+	{
+		const TSharedPtr<FStreamableHandle> LoadHandle = AssetManager.LoadPrimaryAssets(AssetIds);
+		if (LoadHandle.IsValid())
+			LoadHandle->WaitUntilComplete();
+	}
 
 	for (const FPrimaryAssetId& AssetId : AssetIds)
 	{
@@ -265,7 +275,7 @@ void USingularisInventorySubsystem::RebuildRegistry()
 		TagToFormActorMap.Num()
 	);
 
-	// 3) 经标签桥接推导 Definition <-> FormActorClass 双向映射
+	// 5) 经标签桥接推导 Definition <-> FormActorClass 双向映射
 	RebuildDefinitionFormMaps();
 
 	UE_LOG(
@@ -287,7 +297,7 @@ AActor* USingularisInventorySubsystem::SpawnItemInWorld(USingularisItem* Item, c
 	}
 
 	// 2) 取 World（本子系统经 GameInstance 解析，无需调用方传入上下文）
-	UWorld* World = GetGameInstance() != nullptr ? GetGameInstance()->GetWorld() : nullptr;
+	UWorld* const World = GetGameInstance() != nullptr ? GetGameInstance()->GetWorld() : nullptr;
 	if (World == nullptr)
 	{
 		UE_LOG(LogSingularisInventory, Warning, TEXT("[%s] SpawnItemInWorld：World 无效"), *GetNameSafe(this));
@@ -323,7 +333,7 @@ AActor* USingularisInventorySubsystem::SpawnItemInWorld(USingularisItem* Item, c
 	// 4) 生成物品形态
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-	AActor* FormActor = World->SpawnActor<AActor>(FormActorClass, Transform, SpawnParams);
+	AActor* const FormActor = World->SpawnActor<AActor>(FormActorClass, Transform, SpawnParams);
 	if (!IsValid(FormActor))
 	{
 		UE_LOG(
@@ -337,7 +347,7 @@ AActor* USingularisInventorySubsystem::SpawnItemInWorld(USingularisItem* Item, c
 	}
 
 	// 5) 查找 ItemComponent；找到则绑定物品实例（可收容），未找到则仅入世不可收容
-	USingularisItemComponent* ItemComponent = FormActor->FindComponentByClass<USingularisItemComponent>();
+	USingularisItemComponent* const ItemComponent = FormActor->FindComponentByClass<USingularisItemComponent>();
 	if (IsValid(ItemComponent))
 		ItemComponent->BindItem(Item);
 	else
@@ -351,7 +361,8 @@ AActor* USingularisInventorySubsystem::SpawnItemInWorld(USingularisItem* Item, c
 	);
 
 	// 6) 开启物理
-	if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(FormActor->GetRootComponent()))
+	UPrimitiveComponent* const PrimitiveComponent = Cast<UPrimitiveComponent>(FormActor->GetRootComponent());
+	if (PrimitiveComponent != nullptr)
 	{
 		PrimitiveComponent->SetMobility(EComponentMobility::Movable);
 		PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -387,7 +398,7 @@ USingularisItem* USingularisInventorySubsystem::CollectItem(AActor* FormActor) c
 	}
 
 	// 2) 查找 ItemComponent；无则无可收容物品
-	USingularisItemComponent* ItemComponent = FormActor->FindComponentByClass<USingularisItemComponent>();
+	USingularisItemComponent* const ItemComponent = FormActor->FindComponentByClass<USingularisItemComponent>();
 	if (!IsValid(ItemComponent))
 	{
 		UE_LOG(
@@ -401,7 +412,7 @@ USingularisItem* USingularisInventorySubsystem::CollectItem(AActor* FormActor) c
 	}
 
 	// 3) 取回物品实例；无物品则不销毁物品形态
-	USingularisItem* Item = ItemComponent->TakeItem();
+	USingularisItem* const Item = ItemComponent->TakeItem();
 	if (Item == nullptr)
 	{
 		UE_LOG(

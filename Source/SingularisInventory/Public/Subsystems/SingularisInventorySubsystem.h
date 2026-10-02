@@ -6,9 +6,9 @@
 
 #include "SingularisInventorySubsystem.generated.h"
 
+class AActor;
 class USingularisItem;
 class USingularisItemDefinition;
-class AActor;
 
 /**
  * 引力奇点库存子系统。
@@ -19,12 +19,17 @@ class AActor;
  * 支持运行时动态注册 / 注销，并承担物品入世界 / 收容的世界生命周期原语。
  * 蓝图经 GetGameInstanceSubsystem 节点可达。
  */
-UCLASS(NotBlueprintable, BlueprintType)
+UCLASS(
+	NotBlueprintable,
+	BlueprintType,
+	ClassGroup = ("Singularis"),
+	meta = (DisplayName = "引力奇点库存子系统")
+)
 class SINGULARISINVENTORY_API USingularisInventorySubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
-#pragma region Internal Variable
+#pragma region State
 
 	/** 物品标签 -> 物品形态。 */
 	UPROPERTY(Transient)
@@ -63,7 +68,7 @@ public:
 	/** 按物品标签查物品定义，未配置返回 nullptr。 */
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|API",
+		Category = "引力奇点库存子系统",
 		meta = (DisplayName = "按 Tag 获取物品定义")
 	)
 	USingularisItemDefinition* FindDefinitionByItemTag(const FGameplayTag& ItemTag) const;
@@ -71,7 +76,7 @@ public:
 	/** 按物品标签查物品形态，未配置返回 nullptr。 */
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|API",
+		Category = "引力奇点库存子系统",
 		meta = (DisplayName = "按 Tag 获取物品形态")
 	)
 	TSubclassOf<AActor> FindFormActorClass(const FGameplayTag& ItemTag) const;
@@ -79,7 +84,7 @@ public:
 	/** 按物品定义查物品形态，未配置返回 nullptr。 */
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|API",
+		Category = "引力奇点库存子系统",
 		meta = (DisplayName = "按物品定义获取物品形态")
 	)
 	TSubclassOf<AActor> FindFormActorClassByDefinition(USingularisItemDefinition* Definition) const;
@@ -87,7 +92,7 @@ public:
 	/** 按物品形态反查物品定义，未配置返回 nullptr。 */
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|API",
+		Category = "引力奇点库存子系统",
 		meta = (DisplayName = "按物品形态获取物品定义")
 	)
 	USingularisItemDefinition* FindDefinitionByFormActorClass(const TSubclassOf<AActor> FormActorClass) const;
@@ -95,7 +100,7 @@ public:
 	/** 按物品实例查物品形态，未配置返回 nullptr。 */
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点库存|API",
+		Category = "引力奇点库存子系统",
 		meta = (DisplayName = "按物品实例获取物品形态")
 	)
 	TSubclassOf<AActor> FindFormActorClassByItem(USingularisItem* Item) const;
@@ -103,7 +108,7 @@ public:
 	/** 动态注册物品定义 -> 物品形态映射（替换旧关联，保证映射一致）。 */
 	UFUNCTION(
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点库存|API",
+		Category = "引力奇点库存子系统",
 		meta = (DisplayName = "注册物品形态")
 	)
 	bool RegisterItemForm(USingularisItemDefinition* Definition, const TSubclassOf<AActor> FormActorClass);
@@ -111,15 +116,15 @@ public:
 	/** 动态注销物品定义 -> 物品形态映射。 */
 	UFUNCTION(
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点库存|API",
+		Category = "引力奇点库存子系统",
 		meta = (DisplayName = "注销物品形态")
 	)
 	bool UnregisterItemForm(USingularisItemDefinition* Definition);
 
-	/** 重建注册表：经 AssetManager 重新载入物品定义资产映射。 */
+	/** 重建注册表：阻塞至资产发现与主资产加载完成后，经 AssetManager 重新载入物品定义资产映射。 */
 	UFUNCTION(
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点库存|API",
+		Category = "引力奇点库存子系统",
 		meta = (DisplayName = "重建注册表")
 	)
 	void RebuildRegistry();
@@ -132,7 +137,7 @@ public:
 	UFUNCTION(
 		BlueprintCallable,
 		BlueprintAuthorityOnly,
-		Category = "SingularisInventory|引力奇点库存|API",
+		Category = "引力奇点库存子系统",
 		meta = (DisplayName = "生成物品入世界")
 	)
 	AActor* SpawnItemInWorld(USingularisItem* Item, const FTransform& Transform) const;
@@ -145,7 +150,7 @@ public:
 	UFUNCTION(
 		BlueprintCallable,
 		BlueprintAuthorityOnly,
-		Category = "SingularisInventory|引力奇点库存|API",
+		Category = "引力奇点库存子系统",
 		meta = (DisplayName = "收容物品出世界")
 	)
 	USingularisItem* CollectItem(AActor* FormActor) const;
