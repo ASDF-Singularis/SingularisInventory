@@ -23,8 +23,8 @@ void USingularisItemComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 1) 设计期按自身类映射生成：仅权威端、编辑器加载的物品形态、尚未持有物品时执行
-	//    SpawnItemInWorld 路径由调用方显式 BindItem，本分支不应触发
+	// 1) 自动物化：仅权威端、且外部尚未填充物品实例时执行
+	//    外部填充路径（生成方调用 BindItem）以既有实例为准，不再自动生成
 	if (GetOwner()->HasAuthority() && !HasItem())
 	{
 		// 2) 经全局查询子系统按自身类反查物品定义，映射由子系统自动化构建
@@ -165,6 +165,18 @@ USingularisItem* USingularisItemComponent::TakeItem()
 		*GetNameSafe(OutItem->GetClass())
 	);
 	return OutItem;
+}
+
+void USingularisItemComponent::ClearItem()
+{
+	// 1) 空状态安全返回
+	if (Item == nullptr)
+		return;
+
+	// 2) 解除复制注册，广播取出并清空持有（实例无强引用后由 GC 回收）
+	UnregisterItemSubObject();
+	OnItemReleasedEvent.Broadcast(Item.Get());
+	Item = nullptr;
 }
 
 void USingularisItemComponent::RegisterItemSubObject()
