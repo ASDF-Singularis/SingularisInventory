@@ -5,9 +5,9 @@
 #include "InputActionValue.h"
 #include "SingularisItemFragmentType.generated.h"
 
+class APawn;
 class AActor;
 class AController;
-class APawn;
 class USingularisItem;
 
 /**

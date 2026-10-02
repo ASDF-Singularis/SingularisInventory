@@ -19,8 +19,6 @@ class SINGULARISINVENTORY_API USingularisPocketWidget : public UUserWidget, publ
 	GENERATED_BODY()
 
 public:
-#pragma region SPI
-
 	/** 口袋整体刷新：容量、各插槽物品、当前选中索引。 */
 	virtual void OnPocketRefresh_Implementation(
 		int32 Capacity,
@@ -36,6 +34,4 @@ public:
 
 	/** 选中插槽变化。 */
 	virtual void OnSelectionChanged_Implementation(int32 OldSlotIndex, int32 NewSlotIndex) override;
-
-#pragma endregion
 };

@@ -15,7 +15,15 @@ struct FSingularisItemFragmentContext;
  *
  * 片段作为状态的载体，响应物品的触发标签，提供物品的状态数据。
  */
-UCLASS(Abstract, Blueprintable, EditInlineNew, DefaultToInstanced, CollapseCategories)
+UCLASS(
+	Abstract,
+	Blueprintable,
+	EditInlineNew,
+	DefaultToInstanced,
+	CollapseCategories,
+	ClassGroup = ("Singularis"),
+	meta = (DisplayName = "引力奇点物品片段")
+)
 class SINGULARISINVENTORY_API USingularisItemFragment : public UObject, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
@@ -30,13 +38,13 @@ public:
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物品片段|参数",
+		Category = "引力奇点物品片段",
 		meta = (
 			DisplayName = "响应标签",
 			Categories = "Singularis.Inventory.Fragment",
 			ForceSelection = "true",
-			EditCondition = "bIsCDO", // 绑定布尔变量
-			EditConditionHides // 当条件为 false 时，直接在面板隐藏
+			EditCondition = "bIsCDO",
+			EditConditionHides
 		)
 	)
 	FGameplayTagContainer FragmentTags{};
@@ -44,7 +52,7 @@ public:
 #pragma endregion
 
 private:
-#pragma region Internal Variable
+#pragma region State
 
 	UPROPERTY(Transient, DuplicateTransient, NonTransactional)
 	bool bIsCDO = false;
@@ -52,7 +60,7 @@ private:
 #pragma endregion
 
 public:
-#pragma region Object Interface
+#pragma region UObject Interface
 
 #if WITH_EDITOR
 
