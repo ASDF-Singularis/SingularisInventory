@@ -25,8 +25,6 @@ class SINGULARISINVENTORY_API ISingularisPocketViewInterface
 	GENERATED_BODY()
 
 public:
-#pragma region SPI
-
 	/**
 	 * 口袋整体刷新：容量、各插槽物品、当前选中索引。
 	 * 由 WidgetComponent 在绑定完成与视图替换时主动调用，消除错过事件导致的空白期；
@@ -35,7 +33,7 @@ public:
 	UFUNCTION(
 		BlueprintNativeEvent,
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点口袋视图接口|SPI",
+		Category = "引力奇点口袋视图接口",
 		meta = (DisplayName = "口袋刷新")
 	)
 	void OnPocketRefresh(int32 Capacity, const TArray<USingularisItem*>& Items, int32 SelectedSlotIndex);
@@ -44,7 +42,7 @@ public:
 	UFUNCTION(
 		BlueprintNativeEvent,
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点口袋视图接口|SPI",
+		Category = "引力奇点口袋视图接口",
 		meta = (DisplayName = "物品加入")
 	)
 	void OnItemAdded(int32 SlotIndex, USingularisItem* Item);
@@ -53,7 +51,7 @@ public:
 	UFUNCTION(
 		BlueprintNativeEvent,
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点口袋视图接口|SPI",
+		Category = "引力奇点口袋视图接口",
 		meta = (DisplayName = "物品移除")
 	)
 	void OnItemRemoved(int32 SlotIndex, USingularisItem* Item);
@@ -62,10 +60,8 @@ public:
 	UFUNCTION(
 		BlueprintNativeEvent,
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点口袋视图接口|SPI",
+		Category = "引力奇点口袋视图接口",
 		meta = (DisplayName = "选中变化")
 	)
 	void OnSelectionChanged(int32 OldSlotIndex, int32 NewSlotIndex);
-
-#pragma endregion
 };
