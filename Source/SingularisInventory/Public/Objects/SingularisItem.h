@@ -18,12 +18,17 @@
  *
  * 默认物化为本基类；如需扩展运行时状态，可在项目设置配置一个全局子类作为物品实例类。
  */
-UCLASS(Abstract, BlueprintType)
+UCLASS(
+	Abstract,
+	BlueprintType,
+	ClassGroup = ("Singularis"),
+	meta = (DisplayName = "引力奇点物品")
+)
 class SINGULARISINVENTORY_API USingularisItem : public UObject
 {
 	GENERATED_BODY()
 
-#pragma region Internal Variable
+#pragma region State
 
 	/** 物品定义资产，复制到客户端使远端可查询配置。 */
 	UPROPERTY(Replicated)
@@ -52,12 +57,12 @@ public:
 
 #pragma endregion
 
-#pragma region State
+#pragma region API
 
 	/** 物品定义（单一数据源）。 */
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点物品|State",
+		Category = "引力奇点物品|API",
 		meta = (DisplayName = "获取物品定义")
 	)
 	USingularisItemDefinition* GetDefinition() const { return Definition; }
@@ -65,14 +70,10 @@ public:
 	/** 物品片段运行时副本（每实例独立，供组件注册复制子对象）。 */
 	const TArray<TObjectPtr<USingularisItemFragment>>& GetFragments() const { return Fragments; }
 
-#pragma endregion
-
-#pragma region API
-
 	/** 按片段类查询首个匹配片段。 */
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点物品|API",
+		Category = "引力奇点物品|API",
 		meta = (DisplayName = "按类查询片段", DeterminesOutputType = "FragmentClass")
 	)
 	USingularisItemFragment* FindFragmentByClass(TSubclassOf<USingularisItemFragment> FragmentClass) const;
@@ -80,7 +81,7 @@ public:
 	/** 是否存在指定片段类。 */
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点物品|API",
+		Category = "引力奇点物品|API",
 		meta = (DisplayName = "是否存在片段类")
 	)
 	bool HasFragmentByClass(TSubclassOf<USingularisItemFragment> FragmentClass) const;
@@ -88,7 +89,7 @@ public:
 	/** 按片段类查询全部匹配片段（含派生类），供批量操作。 */
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点物品|API",
+		Category = "引力奇点物品|API",
 		meta = (DisplayName = "按类查询全部片段")
 	)
 	TArray<USingularisItemFragment*> FindFragmentsByClass(TSubclassOf<USingularisItemFragment> FragmentClass) const;
@@ -96,7 +97,7 @@ public:
 	/** 按响应标签查询首个匹配片段（层级匹配）。 */
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点物品|API",
+		Category = "引力奇点物品|API",
 		meta = (DisplayName = "按标签查询片段")
 	)
 	USingularisItemFragment* FindFragmentByTag(const FGameplayTag& Tag) const;
@@ -104,7 +105,7 @@ public:
 	/** 是否存在响应指定标签的片段（层级匹配）。 */
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点物品|API",
+		Category = "引力奇点物品|API",
 		meta = (DisplayName = "是否存在片段标签")
 	)
 	bool HasFragmentByTag(const FGameplayTag& Tag) const;
@@ -112,7 +113,7 @@ public:
 	/** 按响应标签查询全部匹配片段（层级匹配），供执行器逐片段执行。 */
 	UFUNCTION(
 		BlueprintPure,
-		Category = "SingularisInventory|引力奇点物品|API",
+		Category = "引力奇点物品|API",
 		meta = (DisplayName = "按标签查询全部片段")
 	)
 	TArray<USingularisItemFragment*> FindFragmentsByTag(const FGameplayTag& Tag) const;
@@ -146,7 +147,7 @@ public:
 	 */
 	UFUNCTION(
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点物品|SPI",
+		Category = "引力奇点物品|SPI",
 		meta = (DisplayName = "从定义物化实例")
 	)
 	static USingularisItem* MaterializeFromDefinition(UObject* Outer, USingularisItemDefinition* ItemDefinition);
