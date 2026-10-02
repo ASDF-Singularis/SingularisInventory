@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <CoreMinimal.h>
 #include <InputActionValue.h>
@@ -31,7 +31,7 @@ UCLASS(
 	ClassGroup = ("Singularis"),
 	meta = (BlueprintSpawnableComponent, DisplayName = "引力奇点物库存组件")
 )
-class SINGULARISINVENTORYGAMEPLAY_API USingularisInventoryComponent : public UActorComponent
+class SINGULARISINVENTORY_API USingularisInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -42,7 +42,7 @@ public:
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物库存|参数",
+		Category = "引力奇点物库存组件",
 		meta = (DisplayName = "丢弃距离")
 	)
 	float DropDistance = 150.0f;
@@ -51,7 +51,7 @@ public:
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物库存|参数",
+		Category = "引力奇点物库存组件",
 		meta = (DisplayName = "丢弃高度偏移")
 	)
 	float DropZOffset = 50.0f;
@@ -59,7 +59,7 @@ public:
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物库存|输入",
+		Category = "引力奇点物库存组件|输入",
 		meta = (DisplayName = "输入优先级")
 	)
 	int32 InputPriority = 10;
@@ -67,7 +67,7 @@ public:
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物库存|输入",
+		Category = "引力奇点物库存组件|输入",
 		meta = (DisplayName = "输入映射上下文")
 	)
 	TObjectPtr<UInputMappingContext> InputMappingContext = nullptr;
@@ -75,7 +75,7 @@ public:
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物库存|输入",
+		Category = "引力奇点物库存组件|输入",
 		meta = (DisplayName = "丢弃输入动作")
 	)
 	TObjectPtr<UInputAction> DropInputAction = nullptr;
@@ -84,7 +84,7 @@ public:
 	UPROPERTY(
 		EditDefaultsOnly,
 		BlueprintReadOnly,
-		Category = "SingularisInventory|引力奇点物库存|输入",
+		Category = "引力奇点物库存组件|输入",
 		meta = (DisplayName = "选中插槽输入动作")
 	)
 	TArray<TObjectPtr<UInputAction>> SelectSlotActions{};
@@ -92,7 +92,7 @@ public:
 #pragma endregion
 
 private:
-#pragma region Internal Variable
+#pragma region State
 
 	TWeakObjectPtr<APlayerController> OwnerPlayerController = nullptr;
 
@@ -122,7 +122,7 @@ public:
 	UFUNCTION(
 		BlueprintCallable,
 		BlueprintAuthorityOnly,
-		Category = "SingularisInventory|引力奇点物库存|API",
+		Category = "引力奇点物库存组件|API",
 		meta = (DisplayName = "拾取物品")
 	)
 	USingularisItem* PickupItem(AActor* FormActor);
@@ -135,7 +135,7 @@ public:
 	UFUNCTION(
 		BlueprintCallable,
 		BlueprintAuthorityOnly,
-		Category = "SingularisInventory|引力奇点物库存|API",
+		Category = "引力奇点物库存组件|API",
 		meta = (DisplayName = "丢弃指定物品")
 	)
 	void DropItem(USingularisItem* Item);
@@ -147,7 +147,7 @@ public:
 	 */
 	UFUNCTION(
 		BlueprintCallable,
-		Category = "SingularisInventory|引力奇点物库存|API",
+		Category = "引力奇点物库存组件|API",
 		meta = (DisplayName = "丢弃手持物品")
 	)
 	void DropHeldItem();
@@ -159,6 +159,16 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void Server_DropItem(USingularisItem* Item);
+
+#pragma endregion
+
+#pragma region Callback
+
+	void HandleSelectSlot(const FInputActionValue& Value, int32 SlotIndex);
+	void HandleDropInputAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void OnPossessPawnChanged(APawn* OldPawn, APawn* NewPawn) const;
 
 #pragma endregion
 
@@ -178,16 +188,6 @@ private:
 
 	/** 计算角色前方丢弃位置。 */
 	FTransform ComputeDropTransform(const ACharacter* Character) const;
-
-#pragma endregion
-
-#pragma region Callback
-
-	void HandleSelectSlot(const FInputActionValue& Value, int32 SlotIndex);
-	void HandleDropInputAction(const FInputActionValue& Value);
-
-	UFUNCTION()
-	void OnPossessPawnChanged(APawn* OldPawn, APawn* NewPawn) const;
 
 #pragma endregion
 };
