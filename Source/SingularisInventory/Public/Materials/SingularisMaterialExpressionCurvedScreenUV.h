@@ -32,7 +32,9 @@ public:
 	FExpressionInput CurvatureStrength;
 
 	/** 渲染目标宽高比输入，用于补偿非正方形像素；未连接时按视口宽高比自动推导。 */
-	UPROPERTY(meta = (RequiredInput = "false", ToolTip = "Defaults to the viewport width / height ratio if not specified"))
+	UPROPERTY(
+		meta = (RequiredInput = "false", ToolTip = "Defaults to the viewport width / height ratio if not specified")
+	)
 	FExpressionInput AspectRatio;
 
 	/** 仅当 CurvatureStrength 输入未连接时生效的曲率强度回退值。 */
@@ -44,11 +46,11 @@ public:
 	float DefaultCurvatureStrength = 0.1f;
 
 #if WITH_EDITOR
-	
+
 	virtual int32 Compile(class FMaterialCompiler* Compiler, int32 OutputIndex) override;
 	virtual void GetCaption(TArray<FString>& OutCaptions) const override;
 	virtual FText GetCreationName() const override;
 	virtual FText GetCreationDescription() const override;
-	
+
 #endif
 };

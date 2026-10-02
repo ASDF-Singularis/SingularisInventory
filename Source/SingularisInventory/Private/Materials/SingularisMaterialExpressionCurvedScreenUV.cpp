@@ -26,12 +26,10 @@ int32 USingularisMaterialExpressionCurvedScreenUV::Compile(class FMaterialCompil
 	// 2) 宽高比输入未连接时按视口尺寸自动推导，避免固定 16:9 在其它分辨率下把圆形畸变拉成椭圆
 	int32 AspectArg;
 	if (AspectRatio.GetTracedInput().Expression)
-	{
 		AspectArg = AspectRatio.Compile(Compiler);
-	}
 	else
 	{
-		const int32 ViewSize = Compiler->ViewProperty(	MEVP_ViewSize);
+		const int32 ViewSize = Compiler->ViewProperty(MEVP_ViewSize);
 		AspectArg = Compiler->Div(
 			Compiler->ComponentMask(ViewSize, true, false, false, false),
 			Compiler->ComponentMask(ViewSize, false, true, false, false)
