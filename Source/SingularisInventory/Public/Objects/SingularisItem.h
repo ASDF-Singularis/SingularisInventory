@@ -18,12 +18,7 @@
  *
  * 默认物化为本基类；如需扩展运行时状态，可在项目设置配置一个全局子类作为物品实例类。
  */
-UCLASS(
-	Abstract,
-	BlueprintType,
-	ClassGroup = ("Singularis"),
-	meta = (DisplayName = "引力奇点物品")
-)
+UCLASS(Abstract, Blueprintable, EditInlineNew, CollapseCategories)
 class SINGULARISINVENTORY_API USingularisItem : public UObject
 {
 	GENERATED_BODY()

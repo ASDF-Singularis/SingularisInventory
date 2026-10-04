@@ -15,15 +15,7 @@ struct FSingularisItemFragmentContext;
  *
  * 片段作为状态的载体，响应物品的触发标签，提供物品的状态数据。
  */
-UCLASS(
-	Abstract,
-	Blueprintable,
-	EditInlineNew,
-	DefaultToInstanced,
-	CollapseCategories,
-	ClassGroup = ("Singularis"),
-	meta = (DisplayName = "引力奇点物品片段")
-)
+UCLASS(Abstract, Blueprintable, DefaultToInstanced, EditInlineNew, CollapseCategories)
 class SINGULARISINVENTORY_API USingularisItemFragment : public UObject, public IGameplayTagAssetInterface
 {
 	GENERATED_BODY()
@@ -43,7 +35,7 @@ public:
 			DisplayName = "响应标签",
 			Categories = "Singularis.Inventory.Fragment",
 			ForceSelection = "true",
-			EditCondition = "bIsCDO",
+			EditCondition = "IsEditableInDefaults",
 			EditConditionHides
 		)
 	)
@@ -51,21 +43,10 @@ public:
 
 #pragma endregion
 
-private:
-#pragma region State
-
-	/** 是否为类默认对象：控制 FragmentTags 仅可在 CDO 上编辑。 */
-	UPROPERTY(Transient, DuplicateTransient, NonTransactional)
-	bool bIsCDO = false;
-
-#pragma endregion
-
-public:
 #pragma region UObject Interface
 
 #if WITH_EDITOR
 
-	virtual void PostInitProperties() override;
 	virtual bool CanEditChange(const FProperty* InProperty) const override;
 
 #endif
@@ -86,6 +67,17 @@ public:
 	 * @param TagContainer 输出的响应标签集合
 	 */
 	virtual void GetOwnedGameplayTags(FGameplayTagContainer& TagContainer) const override;
+
+#pragma endregion
+
+#pragma region Internal Function
+
+	/**
+	 * 细节面板条件：仅当对象是能力自身的类默认对象（CDO）时，参数才显示；
+	 * 作为 Instanced 子对象嵌在其它蓝图或关卡实例中时隐藏。
+	 */
+	UFUNCTION()
+	bool IsEditableInDefaults() const { return HasAnyFlags(RF_ClassDefaultObject); }
 
 #pragma endregion
 };

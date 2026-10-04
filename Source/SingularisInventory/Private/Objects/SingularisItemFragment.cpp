@@ -2,13 +2,6 @@
 
 #if WITH_EDITOR
 
-void USingularisItemFragment::PostInitProperties()
-{
-	Super::PostInitProperties();
-
-	bIsCDO = HasAnyFlags(RF_ClassDefaultObject);
-}
-
 bool USingularisItemFragment::CanEditChange(const FProperty* InProperty) const
 {
 	// 1) 卫语句：基类判定不可编辑或属性无效时直接拒绝
