@@ -14,7 +14,9 @@ class USingularisItemDefinition;
  * 引力奇点库存子系统。
  *
  * 全局查询与编排服务：初始化时经 AssetManager 扫描物品定义资产构建内存映射
- * （物品标签 -> 物品形态 / 物品标签 -> 物品定义，并推导物品定义 <-> 物品形态双向映射），
+ * （物品定义 <-> 物品形态双向映射，并另建物品标签 -> 物品定义查找索引）。
+ * 物品标签降权为纯查找键：仅服务按标签查询，不参与双向映射，
+ * 因而未配置标签的物品仍可正常生成入世界与自动物化。
  * 提供按物品实例 / 物品标签 / 物品定义查询的易用 API，
  * 支持运行时动态注册 / 注销，并承担物品入世界 / 收容的世界生命周期原语。
  * 蓝图经 GetGameInstanceSubsystem 节点可达。
@@ -31,21 +33,17 @@ class SINGULARISINVENTORY_API USingularisInventorySubsystem : public UGameInstan
 
 #pragma region State
 
-	/** 物品标签 -> 物品形态。 */
-	UPROPERTY(Transient)
-	TMap<FGameplayTag, TSubclassOf<AActor>> TagToFormActorMap{};
-
-	/** 物品标签 -> 物品定义（初始化经 AssetManager 扫描构建，强引用保持加载）。 */
-	UPROPERTY(Transient)
-	TMap<FGameplayTag, TObjectPtr<USingularisItemDefinition>> TagToDefinitionMap{};
-
-	/** 物品定义 -> 物品形态（由标签映射推导，随标签映射保持一致）。 */
+	/** 物品定义 -> 物品形态。映射主数据源，经 AssetManager 扫描定义资产构建，与物品标签解耦。 */
 	UPROPERTY(Transient)
 	TMap<TObjectPtr<USingularisItemDefinition>, TSubclassOf<AActor>> DefinitionToFormActorMap{};
 
-	/** 物品形态 -> 物品定义（由标签映射推导，随标签映射保持一致）。 */
+	/** 物品形态 -> 物品定义（定义 -> 形态的反向映射，随定义 -> 形态保持一致）。 */
 	UPROPERTY(Transient)
 	TMap<TSubclassOf<AActor>, TObjectPtr<USingularisItemDefinition>> FormActorToDefinitionMap{};
+
+	/** 物品标签 -> 物品定义（纯查找索引，仅服务按标签查询，不参与定义 <-> 形态映射）。 */
+	UPROPERTY(Transient)
+	TMap<FGameplayTag, TObjectPtr<USingularisItemDefinition>> TagToDefinitionMap{};
 
 #pragma endregion
 
@@ -73,7 +71,7 @@ public:
 	)
 	USingularisItemDefinition* FindDefinitionByItemTag(const FGameplayTag& ItemTag) const;
 
-	/** 按物品标签查物品形态，未配置返回 nullptr。 */
+	/** 按物品标签查物品形态（标签 -> 定义 -> 形态两段查询），未配置返回 nullptr。 */
 	UFUNCTION(
 		BlueprintPure,
 		Category = "引力奇点库存子系统",
@@ -160,8 +158,8 @@ public:
 private:
 #pragma region Internal Function
 
-	/** 经标签映射桥接重建物品定义 <-> 物品形态双向映射。 */
-	void RebuildDefinitionFormMaps();
+	/** 由物品定义 -> 物品形态映射推导物品形态 -> 物品定义反向映射。 */
+	void RebuildDerivedMaps();
 
 #pragma endregion
 };

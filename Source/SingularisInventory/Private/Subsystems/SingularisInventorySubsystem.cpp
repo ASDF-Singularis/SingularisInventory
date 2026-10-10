@@ -39,10 +39,9 @@ void USingularisInventorySubsystem::Deinitialize()
 		*GetNameSafe(this)
 	);
 
-	TagToFormActorMap.Empty();
-	TagToDefinitionMap.Empty();
 	DefinitionToFormActorMap.Empty();
 	FormActorToDefinitionMap.Empty();
+	TagToDefinitionMap.Empty();
 
 	Super::Deinitialize();
 }
@@ -65,18 +64,11 @@ USingularisItemDefinition* USingularisInventorySubsystem::FindDefinitionByItemTa
 
 TSubclassOf<AActor> USingularisInventorySubsystem::FindFormActorClass(const FGameplayTag& ItemTag) const
 {
-	const TSubclassOf<AActor>* const FormActorClass = TagToFormActorMap.Find(ItemTag);
-	if (FormActorClass == nullptr)
-	{
-		UE_LOG(
-			LogSingularisInventory,
-			Warning,
-			TEXT("物品标签 %s 未映射到物品形态，请检查物品定义资产的形态配置"),
-			*ItemTag.ToString()
-		);
+	// 标签仅作查找索引：标签 -> 定义 -> 形态，两段查询各自独立
+	USingularisItemDefinition* const Definition = FindDefinitionByItemTag(ItemTag);
+	if (!IsValid(Definition))
 		return nullptr;
-	}
-	return *FormActorClass;
+	return FindFormActorClassByDefinition(Definition);
 }
 
 TSubclassOf<AActor> USingularisInventorySubsystem::FindFormActorClassByDefinition(
@@ -143,8 +135,8 @@ bool USingularisInventorySubsystem::RegisterItemForm(
 	const TSubclassOf<AActor> FormActorClass
 )
 {
-	// 1) 零信任校验
-	if (!IsValid(Definition) || !Definition->ItemTag.IsValid() || !IsValid(FormActorClass))
+	// 1) 零信任校验：标签不参与形态映射，仅要求定义与形态有效
+	if (!IsValid(Definition) || !IsValid(FormActorClass))
 	{
 		UE_LOG(
 			LogSingularisInventory,
@@ -157,29 +149,23 @@ bool USingularisInventorySubsystem::RegisterItemForm(
 		return false;
 	}
 
-	const FGameplayTag ItemTag = Definition->ItemTag;
-
 	// 2) 幂等：同一关联已注册则无副作用
 	const TSubclassOf<AActor>* const ExistingForm = DefinitionToFormActorMap.Find(Definition);
 	if (ExistingForm != nullptr && *ExistingForm == FormActorClass)
 		return true;
 
-	// 3) 拆除新形态的旧标签关联，保证标签映射唯一
+	// 3) 拆除新形态的旧定义关联，保证形态 -> 定义唯一
 	const TObjectPtr<USingularisItemDefinition>* const ExistingDefinition = FormActorToDefinitionMap.Find(
 		FormActorClass
 	);
 	if (ExistingDefinition != nullptr)
-	{
-		const FGameplayTag ExistingTag = (*ExistingDefinition)->ItemTag;
-		const TSubclassOf<AActor>* const TaggedForm = TagToFormActorMap.Find(ExistingTag);
-		if (TaggedForm != nullptr && *TaggedForm == FormActorClass)
-			TagToFormActorMap.Remove(ExistingTag);
-	}
+		DefinitionToFormActorMap.Remove(*ExistingDefinition);
 
-	// 4) 写入标签映射，重建定义-形态双向映射
-	TagToFormActorMap.Add(ItemTag, FormActorClass);
-	TagToDefinitionMap.Add(ItemTag, Definition);
-	RebuildDefinitionFormMaps();
+	// 4) 写入定义 -> 形态映射并推导反向映射；标签索引仅在定义带标签时同步
+	DefinitionToFormActorMap.Add(Definition, FormActorClass);
+	if (Definition->ItemTag.IsValid())
+		TagToDefinitionMap.Add(Definition->ItemTag, Definition);
+	RebuildDerivedMaps();
 
 	UE_LOG(
 		LogSingularisInventory,
@@ -194,8 +180,8 @@ bool USingularisInventorySubsystem::RegisterItemForm(
 
 bool USingularisInventorySubsystem::UnregisterItemForm(USingularisItemDefinition* Definition)
 {
-	// 1) 零信任校验
-	if (!IsValid(Definition) || !Definition->ItemTag.IsValid())
+	// 1) 零信任校验：标签不参与形态映射，仅要求定义有效
+	if (!IsValid(Definition))
 	{
 		UE_LOG(
 			LogSingularisInventory,
@@ -208,15 +194,11 @@ bool USingularisInventorySubsystem::UnregisterItemForm(USingularisItemDefinition
 	}
 
 	// 2) 未注册则无副作用
-	const TSubclassOf<AActor>* const ExistingForm = DefinitionToFormActorMap.Find(Definition);
-	if (ExistingForm == nullptr)
+	if (DefinitionToFormActorMap.Remove(Definition) == 0)
 		return false;
 
-	// 3) 拆除标签 -> 形态关联并重建双向映射（物品定义映射保持可查）
-	const TSubclassOf<AActor>* const TaggedForm = TagToFormActorMap.Find(Definition->ItemTag);
-	if (TaggedForm != nullptr && *TaggedForm == *ExistingForm)
-		TagToFormActorMap.Remove(Definition->ItemTag);
-	RebuildDefinitionFormMaps();
+	// 3) 推导反向映射；标签索引保持可查（标签 -> 定义不受形态注销影响）
+	RebuildDerivedMaps();
 
 	UE_LOG(
 		LogSingularisInventory,
@@ -236,10 +218,9 @@ void USingularisInventorySubsystem::RebuildRegistry()
 		AssetRegistry->WaitForCompletion();
 
 	// 2) 清空旧映射，避免残留脏数据
-	TagToFormActorMap.Empty();
-	TagToDefinitionMap.Empty();
 	DefinitionToFormActorMap.Empty();
 	FormActorToDefinitionMap.Empty();
+	TagToDefinitionMap.Empty();
 
 	// 3) 经 AssetManager 枚举物品定义资产（单一数据源）
 	UAssetManager& AssetManager = UAssetManager::Get();
@@ -255,37 +236,39 @@ void USingularisInventorySubsystem::RebuildRegistry()
 			LoadHandle->WaitUntilComplete();
 	}
 
-	// 5) 逐资产读取已驻留定义，写入标签映射；无标签或无效定义跳过
+	// 5) 逐资产读取已驻留定义：形态映射与标签索引相互独立，未配置标签不影响形态映射
 	for (const FPrimaryAssetId& AssetId : AssetIds)
 	{
 		USingularisItemDefinition* const Definition =
 			AssetManager.GetPrimaryAssetObject<USingularisItemDefinition>(AssetId);
-		if (!IsValid(Definition) || !Definition->ItemTag.IsValid())
+		if (!IsValid(Definition))
 			continue;
 
-		TagToDefinitionMap.Add(Definition->ItemTag, Definition);
 		if (IsValid(Definition->FormActorClass))
-			TagToFormActorMap.Add(Definition->ItemTag, Definition->FormActorClass);
+			DefinitionToFormActorMap.Add(Definition, Definition->FormActorClass);
+
+		if (Definition->ItemTag.IsValid())
+			TagToDefinitionMap.Add(Definition->ItemTag, Definition);
 	}
 
 	UE_LOG(
 		LogSingularisInventory,
 		Display,
-		TEXT("[%s] RebuildRegistry：物品定义映射已载入 %d 条，物品形态映射 %d 条"),
+		TEXT("[%s] RebuildRegistry：物品形态映射已载入 %d 条，标签索引 %d 条"),
 		*GetNameSafe(this),
-		TagToDefinitionMap.Num(),
-		TagToFormActorMap.Num()
+		DefinitionToFormActorMap.Num(),
+		TagToDefinitionMap.Num()
 	);
 
-	// 6) 经标签桥接推导 Definition <-> FormActorClass 双向映射
-	RebuildDefinitionFormMaps();
+	// 6) 推导形态 -> 定义反向映射
+	RebuildDerivedMaps();
 
 	UE_LOG(
 		LogSingularisInventory,
 		Display,
-		TEXT("[%s] RebuildRegistry：定义-形态映射已推导 %d 条"),
+		TEXT("[%s] RebuildRegistry：形态 -> 定义反向映射已推导 %d 条"),
 		*GetNameSafe(this),
-		DefinitionToFormActorMap.Num()
+		FormActorToDefinitionMap.Num()
 	);
 }
 
@@ -441,20 +424,12 @@ USingularisItem* USingularisInventorySubsystem::CollectItem(AActor* FormActor) c
 	return Item;
 }
 
-void USingularisInventorySubsystem::RebuildDefinitionFormMaps()
+void USingularisInventorySubsystem::RebuildDerivedMaps()
 {
 	// 1) 清空旧映射，避免残留脏数据
-	DefinitionToFormActorMap.Empty();
 	FormActorToDefinitionMap.Empty();
 
-	// 2) 以标签为桥接键，逐条推导定义 <-> 形态双向映射
-	for (const auto& Pair : TagToFormActorMap)
-	{
-		const TObjectPtr<USingularisItemDefinition>* const Definition = TagToDefinitionMap.Find(Pair.Key);
-		if (Definition == nullptr)
-			continue;
-
-		DefinitionToFormActorMap.Add(*Definition, Pair.Value);
-		FormActorToDefinitionMap.Add(Pair.Value, *Definition);
-	}
+	// 2) 由定义 -> 形态映射推导形态 -> 定义反向映射
+	for (const auto& Pair : DefinitionToFormActorMap)
+		FormActorToDefinitionMap.Add(Pair.Value, Pair.Key);
 }
