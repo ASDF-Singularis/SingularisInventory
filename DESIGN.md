@@ -161,7 +161,7 @@ USingularisPocketComponent (Pawn)
 
 [输入与网络]
 USingularisInventoryComponent (PlayerController)
-  ├─ IA_FirstPocket..FourthPocket → SelectSlot(i)                [本地]
+  ├─ IA_FirstPocket..SixthPocket → SelectSlot(i)                 [本地]
   ├─ IA_Drop → DropHeldItem() → Server_DropItem RPC              [客户端 → 服务器]
   └─ Server_DropItem → DropItem(Item)：口袋移除 → SpawnItemInWorld
 ```
@@ -277,7 +277,7 @@ USingularisInventoryComponent (PlayerController)
 | `InputPriority` | `10` | 映射上下文优先级 |
 | `InputMappingContext` | 默认资产 `IMC_Singularis_Inventory` | 仅在所控 Character 存在期间挂载 |
 | `DropInputAction` | 默认资产 `IA_Drop` | 丢弃输入 |
-| `SelectSlotActions` | `IA_FirstPocket`…`IA_FourthPocket` | 数组索引即插槽号，绑定为固定的槽位选择 |
+| `SelectSlotActions` | `IA_FirstPocket`…`IA_SixthPocket` | 数组索引即插槽号，绑定为固定的槽位选择 |
 
 **API**
 

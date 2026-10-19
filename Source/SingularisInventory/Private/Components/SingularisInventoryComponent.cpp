@@ -45,6 +45,12 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 	static const ConstructorHelpers::FObjectFinder<UInputAction> FourthPocketActionFinder(
 		TEXT("/SingularisInventory/Inputs/Actions/IA_FourthPocket.IA_FourthPocket")
 	);
+	static const ConstructorHelpers::FObjectFinder<UInputAction> FifthPocketActionFinder(
+		TEXT("/SingularisInventory/Inputs/Actions/IA_FifthPocket.IA_FifthPocket")
+	);
+	static const ConstructorHelpers::FObjectFinder<UInputAction> SixthPocketActionFinder(
+		TEXT("/SingularisInventory/Inputs/Actions/IA_SixthPocket.IA_SixthPocket")
+	);
 
 	if (InputMappingContextFinder.Succeeded())
 		InputMappingContext = InputMappingContextFinder.Object;
@@ -104,6 +110,26 @@ USingularisInventoryComponent::USingularisInventoryComponent()
 		Error,
 		TEXT("默认插槽 3 输入动作加载失败：%s"),
 		TEXT("/SingularisInventory/Inputs/Actions/IA_FourthPocket")
+	);
+
+	if (FifthPocketActionFinder.Succeeded())
+		SelectSlotActions.Add(FifthPocketActionFinder.Object);
+	else
+		UE_LOG(
+		LogSingularisInventory,
+		Error,
+		TEXT("默认插槽 4 输入动作加载失败：%s"),
+		TEXT("/SingularisInventory/Inputs/Actions/IA_FifthPocket")
+	);
+
+	if (SixthPocketActionFinder.Succeeded())
+		SelectSlotActions.Add(SixthPocketActionFinder.Object);
+	else
+		UE_LOG(
+		LogSingularisInventory,
+		Error,
+		TEXT("默认插槽 5 输入动作加载失败：%s"),
+		TEXT("/SingularisInventory/Inputs/Actions/IA_SixthPocket")
 	);
 }
 
