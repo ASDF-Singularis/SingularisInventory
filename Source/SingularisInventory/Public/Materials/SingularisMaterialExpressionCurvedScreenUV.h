@@ -33,7 +33,8 @@ public:
 
 	/** 渲染目标宽高比输入，用于补偿非正方形像素；未连接时按 UV 在表面上的世界空间尺度自动推导。 */
 	UPROPERTY(
-		meta = (RequiredInput = "false", ToolTip = "Defaults to the surface width / height ratio derived from UV and world position if not specified")
+		meta = (RequiredInput = "false", ToolTip =
+			"Defaults to the surface width / height ratio derived from UV and world position if not specified")
 	)
 	FExpressionInput AspectRatio;
 
@@ -43,7 +44,7 @@ public:
 		Category = MaterialExpressionCurvedScreenUV,
 		meta = (OverridingInputProperty = "CurvatureStrength")
 	)
-	float DefaultCurvatureStrength = 0.1f;
+	float DefaultCurvatureStrength = 0.08f;
 
 #if WITH_EDITOR
 

@@ -26,9 +26,7 @@ int32 USingularisMaterialExpressionCurvedScreenUV::Compile(class FMaterialCompil
 	// 2) 宽高比输入未连接时按 UV 在表面上的世界空间切线长度比自动推导，与视口分辨率无关
 	int32 AspectArg;
 	if (AspectRatio.GetTracedInput().Expression)
-	{
 		AspectArg = AspectRatio.Compile(Compiler);
-	}
 	else
 	{
 		const int32 SurfacePosition = Compiler->WorldPosition(WPT_Default);
