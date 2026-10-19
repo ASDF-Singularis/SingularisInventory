@@ -1,7 +1,7 @@
 #include "Materials/SingularisMaterialExpressionCurvedScreenUV.h"
 
 #include <MaterialCompiler.h>
-#include <Materials/MaterialExpressionViewProperty.h>
+#include <Materials/MaterialExpressionWorldPosition.h>
 
 #define LOCTEXT_NAMESPACE "SingularisMaterialExpressionCurvedScreenUV"
 
@@ -23,16 +23,33 @@ int32 USingularisMaterialExpressionCurvedScreenUV::Compile(class FMaterialCompil
 		                           ? CurvatureStrength.Compile(Compiler)
 		                           : Compiler->Constant(DefaultCurvatureStrength);
 
-	// 2) 宽高比输入未连接时按视口尺寸自动推导，避免固定 16:9 在其它分辨率下把圆形畸变拉成椭圆
+	// 2) 宽高比输入未连接时按 UV 在表面上的世界空间切线长度比自动推导，与视口分辨率无关
 	int32 AspectArg;
 	if (AspectRatio.GetTracedInput().Expression)
+	{
 		AspectArg = AspectRatio.Compile(Compiler);
+	}
 	else
 	{
-		const int32 ViewSize = Compiler->ViewProperty(MEVP_ViewSize);
+		const int32 SurfacePosition = Compiler->WorldPosition(WPT_Default);
+		const int32 PositionDx = Compiler->DDX(SurfacePosition);
+		const int32 PositionDy = Compiler->DDY(SurfacePosition);
+		const int32 UVDx = Compiler->DDX(UVArg);
+		const int32 UVDy = Compiler->DDY(UVArg);
+
+		const int32 Ux = Compiler->ComponentMask(UVDx, true, false, false, false);
+		const int32 Uy = Compiler->ComponentMask(UVDy, true, false, false, false);
+		const int32 Vx = Compiler->ComponentMask(UVDx, false, true, false, false);
+		const int32 Vy = Compiler->ComponentMask(UVDy, false, true, false, false);
+
+		// 由屏幕空间 Jacobian 反解 dP/du 与 dP/dv，行列式在长度比中相互约去
+		const int32 dPdu = Compiler->Sub(Compiler->Mul(PositionDx, Vy), Compiler->Mul(PositionDy, Uy));
+		const int32 dPdv = Compiler->Sub(Compiler->Mul(PositionDy, Ux), Compiler->Mul(PositionDx, Vx));
+
+		const int32 Epsilon = Compiler->Constant(1e-4f);
 		AspectArg = Compiler->Div(
-			Compiler->ComponentMask(ViewSize, true, false, false, false),
-			Compiler->ComponentMask(ViewSize, false, true, false, false)
+			Compiler->Add(Compiler->Length(dPdu), Epsilon),
+			Compiler->Add(Compiler->Length(dPdv), Epsilon)
 		);
 	}
 

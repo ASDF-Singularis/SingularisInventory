@@ -31,9 +31,9 @@ public:
 	UPROPERTY(meta = (RequiredInput = "false", ToolTip = "Defaults to 'DefaultCurvatureStrength' if not specified"))
 	FExpressionInput CurvatureStrength;
 
-	/** 渲染目标宽高比输入，用于补偿非正方形像素；未连接时按视口宽高比自动推导。 */
+	/** 渲染目标宽高比输入，用于补偿非正方形像素；未连接时按 UV 在表面上的世界空间尺度自动推导。 */
 	UPROPERTY(
-		meta = (RequiredInput = "false", ToolTip = "Defaults to the viewport width / height ratio if not specified")
+		meta = (RequiredInput = "false", ToolTip = "Defaults to the surface width / height ratio derived from UV and world position if not specified")
 	)
 	FExpressionInput AspectRatio;
 
